@@ -102,6 +102,7 @@ export async function getProjectState(projectId: string) {
   return {
     llmConfigured: llmStatus().configured,
     llmProvider: llmStatus().provider,
+    llmModel: llmStatus().model,
     project: {
       id: project.id,
       name: project.name,

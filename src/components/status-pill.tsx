@@ -25,11 +25,23 @@ const tones: Record<string, string> = {
   DRAFT: "bg-stone-100 text-stone-700",
 };
 
+const labels: Record<string, string> = {
+  GENERATED_WITHOUT_LLM: "No LLM",
+  LLM: "LLM draft",
+  READY_FOR_HUMAN_REVIEW: "Ready for review",
+  NOT_CONNECTED: "Not connected",
+  ACTIVATION_BLOCKED: "Activation blocked",
+  AWAITING_APPROVAL: "Awaiting approval",
+  REVISION_REQUESTED: "Revision requested",
+  NOT_ACTIVATED: "Not activated",
+  NOT_GENERATED: "Not generated",
+};
+
 export function StatusPill({ value }: { value: string }) {
   const tone = tones[value] ?? "bg-stone-100 text-stone-800";
-  const label = value.replaceAll("_", " ");
+  const label = labels[value] ?? value.replaceAll("_", " ");
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${tone}`}>
+    <span title={value} className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${tone}`}>
       {label}
     </span>
   );

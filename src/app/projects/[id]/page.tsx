@@ -28,7 +28,14 @@ export default function DashboardPage({ params }: { params: Promise<{ id: string
         <h1 className="mt-1 font-serif text-4xl">{state.project.name}</h1>
         <p className="mt-2 text-sm text-ink-soft">Counts come from this project’s rows. Connected integrations are a query, not a preset.</p>
       </header>
-      {state.workflow ? <OutcomeBanner workflow={state.workflow} llmConfigured={state.llmConfigured} /> : null}
+      {state.workflow ? (
+        <OutcomeBanner
+          workflow={state.workflow}
+          llmConfigured={state.llmConfigured}
+          llmProvider={state.llmProvider}
+          llmModel={state.llmModel}
+        />
+      ) : null}
       <section className="grid gap-3 sm:grid-cols-3">
         {cards.map(([label, value]) => (
           <div key={label} className="rounded-xl border border-line bg-panel px-4 py-3 shadow-card">

@@ -6,30 +6,55 @@ export class LlmError extends Error {
 }
 
 export function llmStatus() {
-  if (process.env.OPENAI_API_KEY?.trim()) return { configured: true, provider: "openai" as const };
-  if (process.env.ANTHROPIC_API_KEY?.trim()) return { configured: true, provider: "anthropic" as const };
-  return { configured: false, provider: null };
+  if (process.env.OPENAI_API_KEY?.trim()) {
+    return {
+      configured: true,
+      provider: "openai" as const,
+      model: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
+    };
+  }
+  if (process.env.ANTHROPIC_API_KEY?.trim()) {
+    return {
+      configured: true,
+      provider: "anthropic" as const,
+      model: process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-5",
+    };
+  }
+  return { configured: false, provider: null, model: null };
 }
 
-export async function llmJson(system: string, user: string) {
+export async function llmJson(system: string, user: string, options?: { temperature?: number }) {
   const status = llmStatus();
   if (!status.configured || !status.provider) {
     throw new LlmError("LLM_NOT_CONFIGURED");
   }
-  if (status.provider === "openai") return completeOpenAI(system, user);
-  return completeAnthropic(system, user);
+  const temperature = options?.temperature ?? 0.4;
+  try {
+    return await complete(status.provider, system, user, temperature);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (!/429|500|502|503|timeout|fetch failed|network/i.test(message)) throw error;
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    return complete(status.provider, system, user, temperature);
+  }
 }
 
-async function completeOpenAI(system: string, user: string) {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+function complete(provider: "openai" | "anthropic", system: string, user: string, temperature: number) {
+  if (provider === "openai") return completeOpenAI(system, user, temperature);
+  return completeAnthropic(system, user, temperature);
+}
+
+async function completeOpenAI(system: string, user: string, temperature: number) {
+  const base = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
+  const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.4,
+      model: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
+      temperature,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: system },
@@ -50,7 +75,7 @@ async function completeOpenAI(system: string, user: string) {
   return { text, provider: "openai" };
 }
 
-async function completeAnthropic(system: string, user: string) {
+async function completeAnthropic(system: string, user: string, temperature: number) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -59,8 +84,9 @@ async function completeAnthropic(system: string, user: string) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5",
+      model: process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-5",
       max_tokens: 8000,
+      temperature,
       system,
       messages: [{ role: "user", content: user }],
     }),

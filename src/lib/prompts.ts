@@ -32,8 +32,21 @@ const AGENT_FOCUS: Record<AgentKey, string> = {
     "Write a GTM strategy pack: objective, audience, funnel, channel roles, KPI names. Channel roles are CONDITIONAL_NOT_ACTIVATED. Do not invent numeric KPI targets. Do not activate paid media.",
   campaign_architect:
     "Turn approved strategy into a campaign architecture: one campaign, explicit channels, explicit content volume, funnel, CTA. If channel scope is unknown, status BLOCKED. Do not write the posts.",
-  content_studio:
-    "Write production-ready content objects only for channels in the architecture. Every post needs platform, hook, caption, CTA. Use only approved CTAs. If CTA is unknown, set it to UNKNOWN. No invented claims. Status READY_FOR_HUMAN_REVIEW.",
+  content_studio: `Write production-ready social and email objects only for the channels listed in this project.
+Every object needs platform, a specific hook, a full caption, creative direction, and the approved CTA.
+Write like a good in-house copywriter: concrete, spoken, and specific to THIS business. No corporate filler, no "unlock", "elevate", "game-changer", or "on file".
+Each post takes a different angle (a scene, an objection, a how-it-works, a constraint). Do not repeat the same sentences across posts or platforms.
+Platform craft:
+- instagram: hook is the first line a person would stop on. Caption is 70–140 words with line breaks. At most 3 hashtags, and only if each word appears in the business name or offer.
+- linkedin: 80–160 words in short paragraphs. No hashtag block.
+- email: subject, preheader, and the full letter in caption. Subject is not the caption.
+- facebook: conversational, 60–120 words.
+- tiktok or youtube: spoken hook plus a short caption. Creative direction describes the shots.
+- x: under 240 characters.
+- google_ads: a headline and a description that fit the offer as written.
+If a primary CTA was provided, the cta field must be that exact phrase. If it was not, set cta to UNKNOWN. Do not invent Book now, DM us, or a discount.
+Do not invent statistics, awards, rankings, testimonials, guarantees, prices, or competitor names. If you do, the post will be rejected.
+creativeDirection tells a designer or photographer what to show, using only people, places, and objects named in the project. Status stays READY_FOR_HUMAN_REVIEW.`,
   video_creative:
     "Package a storyboard-only video brief from the approved content. Do not claim a finished film exists. Include shots, on-screen text, and edit notes.",
   campaign_operations:
@@ -47,7 +60,7 @@ const AGENT_FOCUS: Record<AgentKey, string> = {
 };
 
 export function systemPrompt(agentKey: AgentKey) {
-  return `${KERNEL}\n\nROLE\n${AGENT_FOCUS[agentKey]}\n\nReturn a single JSON object and no markdown. Include "runStatus" of COMPLETED, BLOCKED, FAILED, or CONFLICT.`;
+  return `${KERNEL}\n\nROLE\n${AGENT_FOCUS[agentKey]}\n\nReturn a single JSON object and no markdown. Include "runStatus" of COMPLETED, BLOCKED, FAILED, or CONFLICT. Write prose a client could read aloud. Do not mention other clients or prior projects.`;
 }
 
 export function userPrompt(agentKey: AgentKey, ctx: WorkContext) {
@@ -109,9 +122,11 @@ function responseShape(agentKey: AgentKey) {
           caption: "string",
           cta: "approved CTA or UNKNOWN",
           format: "string",
-          claimsNote: "string",
+          claimsNote: "Which project fields the copy relies on. Empty if none are numeric.",
+          creativeDirection: "What to photograph or design. No awards or fake results.",
           subject: "email only, else empty",
           preheader: "email only, else empty",
+          hashtags: ["only tokens that already appear in the business name or offer"],
         },
       ],
     };
@@ -127,6 +142,85 @@ function responseShape(agentKey: AgentKey) {
         shots: [{ frame: 1, visual: "string", audio: "string", onScreenText: "string" }],
         editNotes: "string",
         renderStatus: "STORYBOARD_ONLY",
+      },
+    };
+  }
+  if (agentKey === "client_intelligence") {
+    return {
+      runStatus: "COMPLETED",
+      summary: "one sentence a producer can scan",
+      qa: "PASS | FLAG",
+      title: "Client Intelligence Package",
+      body: {
+        narrative: "A short briefing in plain sentences. Unknowns stay unknown.",
+        facts: [{ field: "Audience", value: "string or UNKNOWN", source: "CLIENT_CONFIRMED | UNKNOWN" }],
+        unknowns: ["field names still blank"],
+        conflicts: [],
+      },
+    };
+  }
+  if (agentKey === "brand_studio") {
+    return {
+      runStatus: "COMPLETED",
+      summary: "one sentence",
+      qa: "PASS | FLAG",
+      title: "Brand Pack",
+      body: {
+        positioning: "Two or three sentences. Proposed, not locked. No invented proof.",
+        voice: ["three or four voice rules a writer can follow"],
+        valueProposition: "string or UNKNOWN",
+        differentiation: "UNKNOWN if no comparative proof was entered",
+        visualDirection: "What the pictures should feel like, or UNKNOWN",
+        tagline: "UNKNOWN unless the project already states one",
+        state: "PROPOSED",
+      },
+    };
+  }
+  if (agentKey === "market_strategy") {
+    return {
+      runStatus: "COMPLETED",
+      summary: "one sentence",
+      qa: "PASS | FLAG",
+      title: "Market Strategy Pack",
+      body: {
+        objective: "the goal as written, or UNKNOWN",
+        audience: "string or UNKNOWN",
+        narrative: "How this request should be approached. Channels stay conditional.",
+        funnel: { stages: ["from the project, or UNKNOWN"], source: "CLIENT_CONFIRMED | UNKNOWN" },
+        channelRoles: [{ channel: "label", role: "why this channel is in the request", status: "CONDITIONAL_NOT_ACTIVATED" }],
+        kpis: [{ name: "string", target: "UNKNOWN", note: "No number was invented." }],
+        activation: "NOT_ACTIVATED",
+      },
+    };
+  }
+  if (agentKey === "campaign_architect") {
+    return {
+      runStatus: "COMPLETED",
+      summary: "channels and volume in one sentence",
+      qa: "PASS",
+      title: "Campaign architecture",
+      body: {
+        campaignBrief: "What the campaign is for, in prose. Do not add channels.",
+        message: "The single idea Content Studio should carry.",
+        contentRequirements: ["what each asset must do"],
+        cta: "approved CTA or UNKNOWN",
+        activation: "NOT_ACTIVATED",
+      },
+    };
+  }
+  if (agentKey === "market_intelligence") {
+    return {
+      runStatus: "COMPLETED",
+      summary: "State that external research was not performed.",
+      qa: "FLAG",
+      title: "Market Intelligence Pack",
+      body: {
+        externalResearch: "NOT_PERFORMED",
+        narrative: "What can be said from the client fields only.",
+        competitors: "UNKNOWN",
+        marketSize: "UNKNOWN",
+        rankings: "UNKNOWN",
+        gaps: ["what a later research pass would still need"],
       },
     };
   }

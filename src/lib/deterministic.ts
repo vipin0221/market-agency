@@ -361,13 +361,14 @@ export function contentStudio(ctx: WorkContext, generationMode: "LLM" | "GENERAT
       { missing: ["channels"] },
     );
   }
-  const drafts = (provided ?? draftPosts(ctx, generationMode)).filter((draft) =>
+  const matched = (provided ?? draftPosts(ctx, generationMode)).filter((draft) =>
     ctx.channels.some(
       (channel) =>
         channel.label.toLowerCase() === draft.platform.toLowerCase() ||
         channel.id === draft.platform.toLowerCase(),
     ),
   );
+  const drafts = limitVolume(matched, ctx.volumePerChannel);
   if (drafts.length === 0) {
     return blocked(
       "content_pack",
@@ -408,9 +409,10 @@ export function contentStudio(ctx: WorkContext, generationMode: "LLM" | "GENERAT
     ctx.revisionNote,
   ]);
   const violations = drafts.flatMap((draft) =>
-    findUnsourcedClaims(`${draft.hook}\n${draft.caption}\n${draft.headline}\n${draft.cta}`, corpus).map(
-      (claim) => `${draft.platform}: ${claim}`,
-    ),
+    findUnsourcedClaims(
+      `${draft.hook}\n${draft.caption}\n${draft.headline}\n${draft.cta}\n${textField(draft.body.creativeDirection)}\n${textField(draft.body.hashtags)}`,
+      corpus,
+    ).map((claim) => `${draft.platform}: ${claim}`),
   );
   if (violations.length > 0) {
     return {
@@ -748,6 +750,7 @@ function draftPosts(ctx: WorkContext, generationMode: string): ContentDraft[] {
           subject: channel.id === "email" ? subjectLine(ctx, angle.label) : "",
           preheader: channel.id === "email" ? trim(ctx.offers || ctx.businessName, 90) : "",
           spokenHook: channel.id === "tiktok" || channel.id === "youtube" ? hook : "",
+          creativeDirection: creativeDirectionFor(channel.id, ctx),
         },
       });
     });
@@ -774,12 +777,43 @@ function captionFor(platform: string, angle: string, ctx: WorkContext) {
   return text;
 }
 
+function creativeDirectionFor(platform: string, ctx: WorkContext) {
+  const subject = ctx.offers || ctx.businessName;
+  const place = ctx.geography ? ` in ${ctx.geography}` : "";
+  if (platform === "email") return "Plain-text email. Do not add an illustrated header unless a real image is supplied later.";
+  if (platform === "linkedin") {
+    return `Optional photograph of ${subject}${place}. No awards, charts, star ratings, or review screenshots.`;
+  }
+  return `Show ${subject}${place}. No medals, star ratings, or prices that were not entered.`;
+}
+
+function limitVolume(drafts: ContentDraft[], volumePerChannel: number) {
+  const counts = new Map<string, number>();
+  return drafts.filter((draft) => {
+    const key = draft.platform.toLowerCase();
+    const count = counts.get(key) ?? 0;
+    if (count >= volumePerChannel) return false;
+    counts.set(key, count + 1);
+    return true;
+  });
+}
+
+function textField(value: unknown) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.filter((item) => typeof item === "string").join(" ");
+  return "";
+}
+
 function describeBusiness(ctx: WorkContext) {
   const industry = ctx.industry ? lowerFirst(ctx.industry) : "";
   const where = ctx.geography ? ` in ${ctx.geography}` : "";
-  if (industry) return `${ctx.businessName} is a ${industry}${where}.`;
+  if (industry) return `${ctx.businessName} is ${article(industry)} ${industry}${where}.`;
   if (ctx.geography) return `${ctx.businessName} is in ${ctx.geography}.`;
   return `${ctx.businessName}.`;
+}
+
+function article(word: string) {
+  return /^[aeiou]/i.test(word.trim()) ? "an" : "a";
 }
 
 function lowerFirst(value: string) {

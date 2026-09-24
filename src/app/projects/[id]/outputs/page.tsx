@@ -11,6 +11,10 @@ export default function OutputsPage({ params }: { params: Promise<{ id: string }
   if (error) return <p className="text-sm text-rose-800">{error}</p>;
   if (!state) return <p className="text-sm">Reading outputs…</p>;
 
+  const currentId = state.workflow?.id;
+  const currentAssets = state.contentAssets.filter((asset) => asset.workflowId === currentId);
+  const earlierAssets = state.contentAssets.filter((asset) => asset.workflowId !== currentId);
+
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
       <header>
@@ -19,12 +23,20 @@ export default function OutputsPage({ params }: { params: Promise<{ id: string }
         <p className="mt-2 text-sm text-ink-soft">{state.contentAssets.length} content objects and {state.outputs.length} specialist packs are stored for this project.</p>
       </header>
       <section className="grid gap-4">
-        <h2 className="font-serif text-2xl">Content objects</h2>
-        {state.contentAssets.length === 0 ? <p className="text-sm text-ink-soft">No posts yet.</p> : null}
-        {state.contentAssets.map((asset) => (
+        <h2 className="font-serif text-2xl">Latest content</h2>
+        {currentAssets.length === 0 ? <p className="text-sm text-ink-soft">No posts yet.</p> : null}
+        {currentAssets.map((asset) => (
           <PostCard key={asset.id} asset={asset} />
         ))}
       </section>
+      {earlierAssets.length > 0 ? (
+        <section className="grid gap-4">
+          <h2 className="font-serif text-2xl">Earlier workflows</h2>
+          {earlierAssets.map((asset) => (
+            <PostCard key={asset.id} asset={asset} />
+          ))}
+        </section>
+      ) : null}
       <section className="grid gap-4">
         <h2 className="font-serif text-2xl">Video packs</h2>
         {state.creativeAssets.length === 0 ? <p className="text-sm text-ink-soft">No storyboard was required for the latest scope, or it has not been written.</p> : null}

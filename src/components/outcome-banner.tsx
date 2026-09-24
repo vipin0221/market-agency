@@ -1,7 +1,17 @@
 import { StatusPill } from "./status-pill";
 import type { ProjectState } from "@/lib/state";
 
-export function OutcomeBanner({ workflow, llmConfigured }: { workflow: NonNullable<ProjectState["workflow"]>; llmConfigured: boolean }) {
+export function OutcomeBanner({
+  workflow,
+  llmConfigured,
+  llmProvider,
+  llmModel,
+}: {
+  workflow: NonNullable<ProjectState["workflow"]>;
+  llmConfigured: boolean;
+  llmProvider?: string | null;
+  llmModel?: string | null;
+}) {
   const tone =
     workflow.outcome === "ACTIVATION_BLOCKED" || workflow.status === "BLOCKED" || workflow.status === "FAILED" || workflow.status === "CONFLICT"
       ? "border-rose-200 bg-rose-50"
@@ -17,11 +27,16 @@ export function OutcomeBanner({ workflow, llmConfigured }: { workflow: NonNullab
       </div>
       <p className="mt-2 text-sm leading-6">{workflow.blockerSummary || "The queue is working from the database."}</p>
       {workflow.error ? <p className="mt-1 text-sm text-rose-900">{workflow.error}</p> : null}
-      {!llmConfigured ? (
+      {llmConfigured ? (
         <p className="mt-2 text-sm text-ink-soft">
-          No LLM API key is configured. Specialists will not invent research or metrics. Content objects are labeled GENERATED WITHOUT LLM and use only the fields on this project.
+          Text specialists are calling {llmProvider || "the configured model"}
+          {llmModel ? ` · ${llmModel}` : ""}. Drafts are labeled LLM draft. They are not approved, and nothing is published.
         </p>
-      ) : null}
+      ) : (
+        <p className="mt-2 text-sm text-ink-soft">
+          No LLM API key is configured. Content is labeled No LLM and uses only this project’s fields. Research and metrics are not invented.
+        </p>
+      )}
     </section>
   );
 }

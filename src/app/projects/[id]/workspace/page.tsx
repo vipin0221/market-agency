@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { DecisionPanel } from "@/components/decision-panel";
+import { DeskBrief } from "@/components/desk-brief";
 import { OutcomeBanner } from "@/components/outcome-banner";
 import { PostCard } from "@/components/post-card";
 import { StatusPill } from "@/components/status-pill";
@@ -39,9 +40,12 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">AI workspace</p>
-        <h1 className="mt-1 font-serif text-4xl">Request, agents, outputs</h1>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">AI workspace</p>
+          <h1 className="mt-1 font-serif text-4xl">Request, agents, content</h1>
+        </div>
+        <StatusPill value={state.llmConfigured ? "LLM" : "GENERATED_WITHOUT_LLM"} />
       </header>
       <form onSubmit={submitRequest} className="rounded-xl border border-line bg-panel p-5 shadow-card">
         <label className="block text-sm">
@@ -65,23 +69,35 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
             <p className="text-xs uppercase tracking-wide text-ink-soft">Active request</p>
             <p className="mt-1 whitespace-pre-wrap">{state.workflow.requestText}</p>
           </section>
-          <OutcomeBanner workflow={state.workflow} llmConfigured={state.llmConfigured} />
-          <section className="grid gap-3">
-            {earlyAgents(state.agents).map((agent) => (
-              <AgentLine key={agent.key} op={agent.op} name={agent.name} status={agent.status} summary={agent.summary} />
-            ))}
-            <AgentLine op="—" name="Human approval" status={state.approval.status} summary="Control layer. Agents cannot approve themselves." />
-            {lateAgents(state.agents).map((agent) => (
-              <AgentLine key={agent.key} op={agent.op} name={agent.name} status={agent.status} summary={agent.summary} />
-            ))}
-          </section>
-          {state.approval.pendingId ? <DecisionPanel approvalId={state.approval.pendingId} onDone={() => void reload()} /> : null}
-          <section className="grid gap-4">
-            {assets.length === 0 ? <p className="text-sm text-ink-soft">Content objects appear here after Content Studio writes them.</p> : null}
-            {assets.map((asset) => (
-              <PostCard key={asset.id} asset={asset} />
-            ))}
-          </section>
+          <OutcomeBanner
+            workflow={state.workflow}
+            llmConfigured={state.llmConfigured}
+            llmProvider={state.llmProvider}
+            llmModel={state.llmModel}
+          />
+          <div className="grid items-start gap-6 xl:grid-cols-[18rem_minmax(0,1fr)]">
+            <section className="grid gap-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Pipeline</h2>
+              {earlyAgents(state.agents).map((agent) => (
+                <AgentLine key={agent.key} op={agent.op} name={agent.name} status={agent.status} summary={agent.summary} />
+              ))}
+              <AgentLine op="—" name="Human approval" status={state.approval.status} summary="Not an agent. Silence is not approval." />
+              {lateAgents(state.agents).map((agent) => (
+                <AgentLine key={agent.key} op={agent.op} name={agent.name} status={agent.status} summary={agent.summary} />
+              ))}
+            </section>
+            <div className="grid gap-4">
+              <DeskBrief outputs={state.outputs.filter((output) => output.workflowId === state.workflow?.id)} />
+              {state.approval.pendingId ? <DecisionPanel approvalId={state.approval.pendingId} onDone={() => void reload()} /> : null}
+              <section className="grid gap-4">
+                <h2 className="font-serif text-2xl">Content for review</h2>
+                {assets.length === 0 ? <p className="text-sm text-ink-soft">Posts appear here after Content Studio writes them.</p> : null}
+                {assets.map((asset) => (
+                  <PostCard key={asset.id} asset={asset} />
+                ))}
+              </section>
+            </div>
+          </div>
         </>
       ) : (
         <p className="text-sm text-ink-soft">No workflow yet. Submit a request to queue the orchestrator.</p>
@@ -111,15 +127,15 @@ function lateAgents<T extends { key: string }>(agents: T[]) {
 
 function AgentLine({ op, name, status, summary }: { op: string; name: string; status: string; summary: string }) {
   return (
-    <div className="grid gap-2 rounded-xl border border-line bg-panel px-4 py-3 sm:grid-cols-[7rem_1fr] sm:items-start">
-      <div>
-        <p className="text-xs text-ink-soft">{op === "—" ? "Gate" : `Agent ${op}`}</p>
-        <p className="font-medium">{name}</p>
-      </div>
-      <div>
+    <div className="rounded-lg border border-line bg-panel px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">
+          <span className="mr-1 text-xs text-ink-soft">{op === "—" ? "Gate" : op}</span>
+          {name}
+        </p>
         <StatusPill value={status} />
-        <p className="mt-1 text-sm leading-6 text-ink-soft">{summary}</p>
       </div>
+      <p className="mt-1 text-xs leading-5 text-ink-soft">{summary}</p>
     </div>
   );
 }
