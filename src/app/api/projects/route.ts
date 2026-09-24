@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
-  const parsed = clientFields.safeParse(json);
+  const parsed = clientFields.safeParse(withProjectName(json));
   if (!parsed.success) {
     return Response.json(
       { error: "BLOCKED", message: parsed.error.issues[0]?.message || "Check the project fields." },
@@ -27,4 +27,13 @@ export async function POST(request: Request) {
   }
   const created = await createProject(parsed.data);
   return Response.json(created, { status: 201 });
+}
+
+function withProjectName(json: unknown) {
+  if (!json || typeof json !== "object" || Array.isArray(json)) return json;
+  const record = { ...(json as Record<string, unknown>) };
+  const projectName = typeof record.projectName === "string" ? record.projectName.trim() : "";
+  const businessName = typeof record.businessName === "string" ? record.businessName.trim() : "";
+  if (!projectName && businessName) record.projectName = businessName;
+  return record;
 }
