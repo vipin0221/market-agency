@@ -756,28 +756,34 @@ function draftPosts(ctx: WorkContext, generationMode: string): ContentDraft[] {
 }
 
 function captionFor(platform: string, angle: string, ctx: WorkContext) {
-  const lines = [
-    sentence(ctx.businessName, ctx.industry, ctx.geography),
-    ctx.audience ? `Written for: ${ctx.audience}.` : "Audience: UNKNOWN.",
-    ctx.offers ? `Offer on file: ${ctx.offers}.` : "Offer: UNKNOWN.",
-    ctx.goals ? `Goal on file: ${ctx.goals}.` : "Goal: UNKNOWN.",
-    ctx.constraints ? `Constraint on file: ${ctx.constraints}.` : "",
-    angle === "limits" ? "This post does not add awards, rankings, testimonials, or results." : "",
-    ctx.website ? `Website on file: ${ctx.website}.` : "",
-  ].filter(Boolean);
-  let text = lines.join(" ");
-  if (platform === "x") text = trim(text, 240);
-  if (platform === "tiktok") text = trim(`${ctx.offers || ctx.businessName}. ${ctx.audience || ""}`.trim(), 180);
-  if (platform === "google_ads") {
-    text = trim(ctx.offers || ctx.businessName, 90);
+  const opener = describeBusiness(ctx);
+  const audience = ctx.audience ? `For ${lowerFirst(ctx.audience)}.` : "";
+  const offer = ctx.offers ? ctx.offers.replace(/\.$/, "") + "." : "";
+  const goal = ctx.goals ? `The aim is to ${lowerFirst(ctx.goals)}.` : "";
+  const constraint = ctx.constraints ? ctx.constraints.replace(/\.$/, "") + "." : "";
+  const site = ctx.website ? ctx.website : "";
+  if (angle === "limits") {
+    return [opener, "No awards, rankings, testimonials, or results are claimed.", constraint].filter(Boolean).join(" ");
   }
+  if (platform === "google_ads") return trim([offer || ctx.businessName, ctx.geography].filter(Boolean).join(" · "), 90);
+  if (platform === "tiktok") return trim([offer || opener, audience].filter(Boolean).join(" "), 180);
+  const parts = [opener, audience, offer, goal, constraint, site].filter(Boolean);
+  if (platform === "email" || platform === "linkedin") return parts.join("\n\n");
+  let text = parts.join(" ");
+  if (platform === "x") text = trim(text, 240);
   return text;
 }
 
-function sentence(business: string, industry: string, geography: string) {
-  const industryBit = industry ? ` in ${industry}` : "";
-  const geoBit = geography ? `, ${geography}` : "";
-  return `${business}${industryBit}${geoBit}.`;
+function describeBusiness(ctx: WorkContext) {
+  const industry = ctx.industry ? lowerFirst(ctx.industry) : "";
+  const where = ctx.geography ? ` in ${ctx.geography}` : "";
+  if (industry) return `${ctx.businessName} is a ${industry}${where}.`;
+  if (ctx.geography) return `${ctx.businessName} is in ${ctx.geography}.`;
+  return `${ctx.businessName}.`;
+}
+
+function lowerFirst(value: string) {
+  return value.charAt(0).toLowerCase() + value.slice(1);
 }
 
 function subjectLine(ctx: WorkContext, angle: string) {

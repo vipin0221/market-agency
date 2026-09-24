@@ -24,6 +24,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `ANTHROPIC_API_KEY` | no | Used when `OPENAI_API_KEY` is empty. |
 | `OPENAI_MODEL` | no | Default `gpt-4o-mini`. |
 | `ANTHROPIC_MODEL` | no | Default `claude-sonnet-4-5`. |
+| `WORKER_INTERVAL_MS` | no | How often the database queue claims the next job. Default `1200`. |
 
 If neither key is set, the pipeline still runs. Research does not invent statistics. Content objects are written from the fields on the project and labeled `GENERATED_WITHOUT_LLM`. A failed model call is stored as `FAILED` and does not fall back to a fake success.
 

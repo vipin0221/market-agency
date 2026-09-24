@@ -9,11 +9,18 @@ const globalForWorker = globalThis as unknown as { agencyWorker?: boolean; agenc
 export function startWorker() {
   if (globalForWorker.agencyWorker) return;
   globalForWorker.agencyWorker = true;
-  void prepareDatabase().catch((error) => console.error("database pragma failed", error));
-  void recoverStuckJobs().catch((error) => console.error("job recovery failed", error));
+  void (async () => {
+    await prepareDatabase();
+    await prisma.job.updateMany({
+      where: { status: "RUNNING", attempts: { lt: 3 } },
+      data: { status: "QUEUED", lockedAt: null },
+    });
+    await recoverStuckJobs();
+  })().catch((error) => console.error("worker startup failed", error));
+  const intervalMs = Number(process.env.WORKER_INTERVAL_MS || 1200);
   setInterval(() => {
     void tick().catch((error) => console.error("worker tick failed", error));
-  }, 1200);
+  }, Number.isFinite(intervalMs) && intervalMs >= 200 ? intervalMs : 1200);
 }
 
 export function tick() {

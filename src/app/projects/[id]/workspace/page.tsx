@@ -67,8 +67,11 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
           </section>
           <OutcomeBanner workflow={state.workflow} llmConfigured={state.llmConfigured} />
           <section className="grid gap-3">
+            {earlyAgents(state.agents).map((agent) => (
+              <AgentLine key={agent.key} op={agent.op} name={agent.name} status={agent.status} summary={agent.summary} />
+            ))}
             <AgentLine op="—" name="Human approval" status={state.approval.status} summary="Control layer. Agents cannot approve themselves." />
-            {state.agents.map((agent) => (
+            {lateAgents(state.agents).map((agent) => (
               <AgentLine key={agent.key} op={agent.op} name={agent.name} status={agent.status} summary={agent.summary} />
             ))}
           </section>
@@ -85,6 +88,25 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
       )}
     </div>
   );
+}
+
+const EARLY = new Set([
+  "orchestrator",
+  "client_intelligence",
+  "market_intelligence",
+  "brand_studio",
+  "market_strategy",
+  "campaign_architect",
+  "content_studio",
+  "video_creative",
+]);
+
+function earlyAgents<T extends { key: string }>(agents: T[]) {
+  return agents.filter((agent) => EARLY.has(agent.key));
+}
+
+function lateAgents<T extends { key: string }>(agents: T[]) {
+  return agents.filter((agent) => !EARLY.has(agent.key));
 }
 
 function AgentLine({ op, name, status, summary }: { op: string; name: string; status: string; summary: string }) {

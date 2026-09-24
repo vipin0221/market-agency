@@ -26,25 +26,38 @@ export default function AgentsPage({ params }: { params: Promise<{ id: string }>
             </tr>
           </thead>
           <tbody>
+            {state.agents.filter((agent) => ["orchestrator", "client_intelligence", "market_intelligence", "brand_studio", "market_strategy", "campaign_architect", "content_studio", "video_creative"].includes(agent.key)).map((agent) => (
+              <AgentRow key={agent.key} agent={agent} />
+            ))}
             <tr className="border-b border-line">
               <td className="px-4 py-3 font-medium">Human approval</td>
               <td className="px-4 py-3"><StatusPill value={state.approval.status} /></td>
               <td className="px-4 py-3 text-ink-soft">—</td>
               <td className="px-4 py-3 text-ink-soft">Not an agent. A recorded decision is required.</td>
             </tr>
-            {state.agents.map((agent) => (
-              <tr key={agent.key} className="border-b border-line last:border-0">
-                <td className="px-4 py-3">
-                  <span className="text-ink-soft">{agent.op}</span> {agent.name}
-                </td>
-                <td className="px-4 py-3"><StatusPill value={agent.status} /></td>
-                <td className="px-4 py-3">{agent.qa || "—"}</td>
-                <td className="px-4 py-3 text-ink-soft">{agent.summary}</td>
-              </tr>
+            {state.agents.filter((agent) => ["campaign_operations", "account_integration", "campaign_intelligence", "growth_optimization"].includes(agent.key)).map((agent) => (
+              <AgentRow key={agent.key} agent={agent} />
             ))}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+function AgentRow({
+  agent,
+}: {
+  agent: { key: string; op: string; name: string; status: string; qa: string; summary: string };
+}) {
+  return (
+    <tr className="border-b border-line last:border-0">
+      <td className="px-4 py-3">
+        <span className="text-ink-soft">{agent.op}</span> {agent.name}
+      </td>
+      <td className="px-4 py-3"><StatusPill value={agent.status} /></td>
+      <td className="px-4 py-3">{agent.qa || "—"}</td>
+      <td className="px-4 py-3 text-ink-soft">{agent.summary}</td>
+    </tr>
   );
 }
