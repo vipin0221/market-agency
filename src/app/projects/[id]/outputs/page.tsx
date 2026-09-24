@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import { OperatorNotice } from "@/components/operator-notice";
 import { OutputView } from "@/components/output-view";
 import { PostCard } from "@/components/post-card";
 import { useProjectState } from "@/components/use-project-state";
@@ -17,6 +18,7 @@ export default function OutputsPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
+      <OperatorNotice>Raw packs and stored JSON. Posts for review live under Content.</OperatorNotice>
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Output center</p>
         <h1 className="mt-1 font-serif text-4xl">Work product</h1>

@@ -2,7 +2,17 @@
 
 import { useState } from "react";
 
-export function DecisionPanel({ approvalId, onDone }: { approvalId: string; onDone: () => void }) {
+export function DecisionPanel({
+  approvalId,
+  onDone,
+  title = "Record a decision",
+  lede = "Silence is not approval. Nothing publishes from this control.",
+}: {
+  approvalId: string;
+  onDone: () => void;
+  title?: string;
+  lede?: string;
+}) {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +39,8 @@ export function DecisionPanel({ approvalId, onDone }: { approvalId: string; onDo
 
   return (
     <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
-      <h3 className="font-serif text-2xl">Record a decision</h3>
-      <p className="mt-1 text-sm text-ink-soft">Silence is not approval. Nothing publishes from this control.</p>
+      <h3 className="font-serif text-2xl">{title}</h3>
+      <p className="mt-1 text-sm text-ink-soft">{lede}</p>
       <label className="mt-4 block text-sm">
         <span className="mb-1 block font-medium">Note</span>
         <textarea

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { OperatorNotice } from "@/components/operator-notice";
 import { StatusPill } from "@/components/status-pill";
 import { useProjectState } from "@/components/use-project-state";
 
@@ -25,7 +26,8 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Integrations</p>
+      <OperatorNotice>Account rows. Connect in the main nav is the same refusal, written for the person running the brand.</OperatorNotice>
+      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-accent">Integrations</p>
       <h1 className="mt-1 font-serif text-4xl">Accounts</h1>
       <p className="mt-2 text-sm leading-6 text-ink-soft">
         Every provider starts NOT CONNECTED. Connect does not open OAuth in Phase 1 and does not flip the status.

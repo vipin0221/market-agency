@@ -76,7 +76,7 @@ export function ClientForm({
       return;
     }
     if (mode === "create" && data.projectId) {
-      router.push(`/projects/${data.projectId}/workspace`);
+      router.push(`/projects/${data.projectId}`);
       return;
     }
     setMessage("Business fields saved. Earlier outputs were not rewritten.");
