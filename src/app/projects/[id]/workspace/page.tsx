@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { DecisionPanel } from "@/components/decision-panel";
+import { OperatorNotice } from "@/components/operator-notice";
 import { DeskBrief } from "@/components/desk-brief";
 import { OutcomeBanner } from "@/components/outcome-banner";
 import { PostCard } from "@/components/post-card";
@@ -40,6 +41,7 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
+      <OperatorNotice>Pipeline, agent keys, and model status. The default path is Overview, Journey, Content, and Review.</OperatorNotice>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">AI workspace</p>

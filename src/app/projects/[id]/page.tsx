@@ -1,114 +1,100 @@
 "use client";
 
+import Link from "next/link";
 import { use } from "react";
-import { ClientForm } from "@/components/client-form";
-import { OutcomeBanner } from "@/components/outcome-banner";
-import { StatusPill } from "@/components/status-pill";
+import { HumanStatusPill } from "@/components/human-status";
+import { JourneyStrip } from "@/components/journey-strip";
+import { PostPreview } from "@/components/post-preview";
+import { RequestComposer } from "@/components/request-composer";
 import { useProjectState } from "@/components/use-project-state";
+import { buildJourney, currentPosts, focusStage, nextAction, showFollowUpRequest } from "@/lib/journey";
 
-export default function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
+export default function OverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error } = useProjectState(id);
+  const { state, error, reload } = useProjectState(id);
   if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Reading the project database…</p>;
+  if (!state || !state.client) return <p className="text-sm">Loading this brand…</p>;
 
-  const cards = [
-    ["Workflows", state.counts.workflows],
-    ["Outputs", state.counts.outputs],
-    ["Content objects", state.counts.contentAssets],
-    ["Pending approvals", state.counts.pendingApprovals],
-    ["Connected integrations", `${state.counts.connectedIntegrations} / ${state.counts.integrations}`],
-    ["Observed metrics", state.counts.metrics],
-  ];
+  const action = nextAction(state);
+  const stages = buildJourney(state);
+  const posts = currentPosts(state).slice(0, 4);
+  const frame =
+    action.status === "blocked" ? "border-rose-200" : action.status === "waiting" ? "border-amber-200" : "border-line";
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Project dashboard</p>
-        <h1 className="mt-1 font-serif text-4xl">{state.project.name}</h1>
-        <p className="mt-2 text-sm text-ink-soft">Counts come from this project’s rows. Connected integrations are a query, not a preset.</p>
-      </header>
-      {state.workflow ? (
-        <OutcomeBanner
-          workflow={state.workflow}
-          llmConfigured={state.llmConfigured}
-          llmProvider={state.llmProvider}
-          llmModel={state.llmModel}
-        />
-      ) : null}
-      <section className="grid gap-3 sm:grid-cols-3">
-        {cards.map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-line bg-panel px-4 py-3 shadow-card">
-            <p className="text-xs uppercase tracking-wide text-ink-soft">{label}</p>
-            <p className="mt-1 font-serif text-3xl">{value}</p>
-          </div>
-        ))}
+    <div className="mx-auto grid max-w-6xl gap-8">
+      <section className={`rounded-3xl border bg-panel px-6 py-7 shadow-card ${frame}`}>
+        <HumanStatusPill status={action.status} />
+        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">{state.client.businessName}</p>
+        <h1 className="mt-1 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">{action.title}</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">{action.detail}</p>
+        {state.workflow?.requestText ? <p className="mt-4 max-w-2xl line-clamp-3 text-sm leading-6">“{state.workflow.requestText}”</p> : null}
+        <div className="mt-5">
+          {action.href.startsWith("#") ? (
+            <a href={action.href} className="inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
+              {action.cta}
+            </a>
+          ) : (
+            <Link href={action.href} className="inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
+              {action.cta}
+            </Link>
+          )}
+        </div>
       </section>
-      <section className="rounded-xl border border-line bg-panel p-5 shadow-card">
-        <h2 className="font-serif text-2xl">Business on file</h2>
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-          {Object.entries({
-            Business: state.client.businessName,
-            Industry: state.client.industry,
-            Audience: state.client.audience,
-            Geography: state.client.geography,
-            Offer: state.client.offers,
-            Goal: state.client.goals,
-            Channels: state.client.channels,
-            CTA: state.client.primaryCta,
-            Funnel: state.client.funnel,
-            Budget: state.client.budget,
-            Constraints: state.client.constraints,
-            Website: state.client.website,
-          }).map(([label, value]) => (
+      <JourneyStrip stages={stages} currentId={focusStage(stages)} />
+      <section>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-serif text-2xl">Latest posts</h2>
+          <Link href={`/projects/${id}/content`} className="text-sm font-semibold text-accent">
+            All posts
+          </Link>
+        </div>
+        {posts.length === 0 ? (
+          <p className="mt-3 rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm text-ink-soft">
+            Posts will show up here as soon as they are drafted.
+          </p>
+        ) : (
+          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+            {posts.map((asset) => (
+              <PostPreview key={asset.id} asset={asset} businessName={state.client?.businessName || state.project.name} website={state.client?.website} />
+            ))}
+          </div>
+        )}
+      </section>
+      {showFollowUpRequest(state) ? <RequestComposer projectId={id} onDone={() => void reload()} /> : null}
+      <details className="rounded-2xl border border-line bg-panel p-4">
+        <summary className="cursor-pointer text-sm font-medium">Operator counts</summary>
+        <p className="mt-2 text-xs leading-5 text-ink-soft">The journey above is the working view. These counts are the stored rows.</p>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          {(
+            [
+              ["Workflows", state.counts.workflows],
+              ["Outputs", state.counts.outputs],
+              ["Content objects", state.counts.contentAssets],
+              ["Pending approvals", state.counts.pendingApprovals],
+              ["Connected integrations", `${state.counts.connectedIntegrations} / ${state.counts.integrations}`],
+              ["Observed metrics", state.counts.metrics],
+            ] as const
+          ).map(([label, value]) => (
             <div key={label}>
               <dt className="text-xs uppercase tracking-wide text-ink-soft">{label}</dt>
-              <dd>{value || "UNKNOWN"}</dd>
+              <dd className="mt-1 font-serif text-2xl">{value}</dd>
             </div>
           ))}
         </dl>
-      </section>
-      <section className="rounded-xl border border-line bg-panel p-5 shadow-card">
-        <h2 className="font-serif text-2xl">Edit business info</h2>
-        <p className="mb-4 mt-1 text-sm text-ink-soft">Saving does not regenerate approved work. Submit a new request from the AI workspace when you want another run.</p>
-        <ClientForm
-          key={id}
-          mode="edit"
-          projectId={id}
-          initial={{
-            projectName: state.project.name,
-            businessName: state.client.businessName,
-            industry: state.client.industry,
-            audience: state.client.audience,
-            geography: state.client.geography,
-            goals: state.client.goals,
-            offers: state.client.offers,
-            channels: state.client.channels,
-            budget: state.client.budget,
-            constraints: state.client.constraints,
-            website: state.client.website,
-            notes: state.client.notes,
-            primaryCta: state.client.primaryCta,
-            funnel: state.client.funnel,
-          }}
-        />
-      </section>
-      <section>
-        <h2 className="font-serif text-2xl">Workflow history</h2>
-        <ul className="mt-3 grid gap-2">
+        <h3 className="mt-6 font-serif text-xl">Earlier requests</h3>
+        <ul className="mt-2 grid gap-2">
           {state.workflows.length === 0 ? <li className="text-sm text-ink-soft">No request has been submitted.</li> : null}
           {state.workflows.map((item) => (
-            <li key={item.id} className="rounded-xl border border-line bg-panel px-4 py-3 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill value={item.status} />
-                {item.outcome ? <StatusPill value={item.outcome} /> : null}
-                <span className="text-ink-soft">{new Date(item.createdAt).toLocaleString()}</span>
-              </div>
-              <p className="mt-2 whitespace-pre-wrap">{item.requestText}</p>
+            <li key={item.id} className="rounded-xl border border-line px-3 py-3 text-sm">
+              <p className="text-xs uppercase tracking-wide text-ink-soft">
+                {item.status.replaceAll("_", " ")} · {new Date(item.createdAt).toLocaleString()}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap">{item.requestText}</p>
             </li>
           ))}
         </ul>
-      </section>
+      </details>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { DecisionPanel } from "@/components/decision-panel";
+import { OperatorNotice } from "@/components/operator-notice";
 import { PostCard } from "@/components/post-card";
 import { StatusPill } from "@/components/status-pill";
 import { useProjectState } from "@/components/use-project-state";
@@ -19,6 +20,7 @@ export default function ApprovalsPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
+      <OperatorNotice>Decision log. Review is where you approve, ask for a revision, or hold.</OperatorNotice>
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Approval center</p>
         <h1 className="mt-1 font-serif text-4xl">Human decisions</h1>

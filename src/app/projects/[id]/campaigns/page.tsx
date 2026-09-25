@@ -59,8 +59,11 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Campaign center</p>
-        <h1 className="mt-1 font-serif text-4xl">Planned, not activated</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Campaigns</p>
+        <h1 className="mt-1 font-serif text-4xl">Optional plans</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
+          Organic posts do not need a campaign. Plans here are not activated. Authorize publish will not go live.
+        </p>
       </header>
       {state.campaigns.length === 0 ? <p className="text-sm text-ink-soft">Campaign Architect has not written a campaign for this project.</p> : null}
       {state.campaigns.map((campaign) => (
@@ -77,6 +80,7 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
           <button type="button" onClick={() => authorize(campaign.id)} className="mt-4 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white">
             Authorize publish
           </button>
+          <p className="mt-2 text-xs text-ink-soft">This stays refused until a real connection exists. It does not publish.</p>
         </article>
       ))}
       {formError ? <p className="text-sm text-rose-800">{formError}</p> : null}
