@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { use, useState } from "react";
+import { NextStepBar, onThisPage } from "@/components/next-step";
+import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
+import { Banner, EmptyState, LoadingLine, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
+import { nextAction } from "@/lib/journey";
 
 export default function CampaignsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -13,8 +18,8 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
   const [message, setMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Reading campaigns…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading campaigns…" />;
 
   async function authorize(campaignId: string) {
     setMessage(null);
@@ -56,19 +61,27 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
     await reload();
   }
 
+  const action = nextAction(state);
+
   return (
-    <div className="mx-auto grid max-w-4xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Campaigns</p>
-        <h1 className="mt-1 font-serif text-4xl">Optional plans</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          Optional. Organic posts do not need a campaign. Plans here are not activated, and this version does not post them.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Campaigns"
+        title="Optional plans"
+        lede="Optional. Organic posts do not need a campaign. Plans here are not activated, and this version does not post them."
+      />
+      <NextStepBar action={action} projectId={id} active={onThisPage(action, id, "campaigns")} onDone={() => void reload()} />
       {state.campaigns.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">
+        <EmptyState
+          title="No plan yet"
+          action={
+            <Link href={`/projects/${id}`} className={secondaryButtonClass}>
+              Back to overview
+            </Link>
+          }
+        >
           Next: you can skip campaigns. A plan shows up here only after the journey writes one, and it stays not activated.
-        </p>
+        </EmptyState>
       ) : null}
       {state.campaigns.map((campaign) => (
         <article key={campaign.id} className="rounded-xl border border-line bg-panel p-5 shadow-card">
@@ -81,14 +94,14 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
           <p className="mt-3 text-sm text-ink-soft">
             Content objects on this campaign: {state.contentAssets.filter((asset) => asset.campaignId === campaign.id).length}
           </p>
-          <button type="button" onClick={() => authorize(campaign.id)} className="mt-4 rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
+          <button type="button" onClick={() => authorize(campaign.id)} className={`mt-4 ${secondaryButtonClass}`}>
             Check posting
           </button>
           <p className="mt-2 text-xs leading-5 text-ink-soft">Phase 1 does not post or activate. This check stays refused and does not mark the plan live.</p>
         </article>
       ))}
-      {formError ? <p className="text-sm text-rose-800">{formError}</p> : null}
-      {message ? <p className="text-sm text-pine">{message}</p> : null}
+      {formError ? <Banner tone="error" role="alert">{formError}</Banner> : null}
+      {message ? <Banner tone="success" role="status">{message}</Banner> : null}
       <section className="rounded-xl border border-line bg-panel p-5">
         <h2 className="font-serif text-2xl">Observed metrics</h2>
         <p className="mt-1 text-sm text-ink-soft">None are imported. If this list is empty, Campaign Intelligence stays blocked and will not invent a rate.</p>
@@ -103,14 +116,23 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
           ))}
         </ul>
         <form onSubmit={addMetric} className="mt-4 grid gap-3 sm:grid-cols-3">
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Metric name" className="rounded-md border border-line px-3 py-2" />
-          <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="Observed value" className="rounded-md border border-line px-3 py-2" />
-          <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Note" className="rounded-md border border-line px-3 py-2" />
-          <button type="submit" className="rounded-md bg-ink px-3 py-2 text-sm font-semibold text-paper sm:col-span-3 sm:w-fit">
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Metric name</span>
+            <input required value={name} onChange={(event) => setName(event.target.value)} className={fieldClass} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Observed value</span>
+            <input required value={value} onChange={(event) => setValue(event.target.value)} className={fieldClass} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Note</span>
+            <input value={note} onChange={(event) => setNote(event.target.value)} className={fieldClass} />
+          </label>
+          <button type="submit" className={`w-fit sm:col-span-3 ${primaryButtonClass}`}>
             Record observed metric
           </button>
         </form>
-        <button type="button" onClick={rerun} className="mt-4 rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
+        <button type="button" onClick={rerun} className={`mt-4 ${secondaryButtonClass}`}>
           Re-run campaign intelligence
         </button>
       </section>

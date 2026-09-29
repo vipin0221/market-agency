@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CHANNELS } from "@/lib/catalog";
+import { AppTopBar, Banner, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 
 type Values = {
   projectName: string;
@@ -120,17 +121,19 @@ export function IntakeWizard() {
   const current = steps[step];
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <div className="flex items-center justify-between gap-3">
-        <Link href="/" className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-          Agency OS
-        </Link>
-        <Link href="/" className="text-sm text-ink-soft">
+    <main className="mx-auto min-w-0 max-w-2xl overflow-x-clip px-4 py-8 sm:px-6">
+      <AppTopBar>
+        <Link href="/" className="font-semibold">
           Brands
         </Link>
-      </div>
-      <h1 className="mt-6 font-serif text-4xl">Add a brand</h1>
-      <p className="mt-2 text-sm leading-6 text-ink-soft">Business name, the ask, and one channel are required. Everything else can wait.</p>
+      </AppTopBar>
+      <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+        Step {step + 1} of {steps.length}
+      </p>
+      <h1 className="mt-2 break-words font-serif text-3xl leading-tight sm:text-4xl">Add a brand</h1>
+      <p className="mt-2 text-sm leading-6 text-ink-soft">
+        Business name, the ask, and one channel are required. Everything else can wait. Next, after you start, is the brand overview. Drafts are not posted.
+      </p>
       <ol className="mt-6 flex flex-wrap gap-2">
         {steps.map((item, index) => {
           const active = index === step;
@@ -190,9 +193,7 @@ export function IntakeWizard() {
           ) : null}
           {step === 3 ? (
             <>
-              <p className="rounded-xl border border-line bg-paper px-3 py-3 text-sm leading-6 text-ink-soft">
-                Starting writes drafts only. Review comes before any approval. Nothing is posted.
-              </p>
+              <Banner tone="info">Starting writes drafts only. Review comes before any approval. Nothing is posted.</Banner>
               <fieldset>
                 <legend className="text-sm font-medium">Channels *</legend>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -221,11 +222,13 @@ export function IntakeWizard() {
           ) : null}
         </div>
         {error ? (
-          <p role="alert" className="mt-4 text-sm text-rose-800">
-            {error}
-          </p>
+          <div className="mt-4">
+            <Banner tone="error" role="alert">
+              {error}
+            </Banner>
+          </div>
         ) : null}
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-3">
           {step > 0 ? (
             <button
               type="button"
@@ -233,16 +236,16 @@ export function IntakeWizard() {
                 setError(null);
                 setStep(step - 1);
               }}
-              className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold"
+              className={secondaryButtonClass}
             >
               Back
             </button>
           ) : (
-            <Link href="/" className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold">
-              Back
+            <Link href="/" className={secondaryButtonClass}>
+              Brands
             </Link>
           )}
-          <button type="submit" disabled={pending} className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50">
+          <button type="submit" disabled={pending} className={primaryButtonClass}>
             {pending ? "Starting…" : step === steps.length - 1 ? "Start this brand" : "Continue"}
           </button>
         </div>
@@ -280,7 +283,7 @@ function Field({
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+        className={fieldClass}
       />
       {hint ? <span className="mt-1 block text-xs text-ink-soft">{hint}</span> : null}
     </label>
@@ -317,7 +320,7 @@ function Area({
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+        className={fieldClass}
       />
     </label>
   );

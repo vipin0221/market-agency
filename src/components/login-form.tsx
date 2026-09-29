@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Banner, fieldClass, primaryButtonClass } from "@/components/ui";
 
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
@@ -35,35 +36,35 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 grid gap-4">
+    <form onSubmit={submit} className="grid gap-4">
       <label className="block text-sm">
-        <span className="mb-1 block font-medium">Email</span>
+        <span className="mb-1.5 block font-medium">Email</span>
         <input
           required
           type="email"
           autoComplete="username"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+          className={fieldClass}
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium">Password</span>
+        <span className="mb-1.5 block font-medium">Password</span>
         <input
           required
           type="password"
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+          className={fieldClass}
         />
       </label>
       {error ? (
-        <p role="alert" className="text-sm text-rose-800">
+        <Banner tone="error" role="alert">
           {error}
-        </p>
+        </Banner>
       ) : null}
-      <button type="submit" disabled={pending} className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50">
+      <button type="submit" disabled={pending} className={primaryButtonClass}>
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>

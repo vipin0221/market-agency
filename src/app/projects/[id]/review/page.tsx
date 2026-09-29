@@ -6,17 +6,19 @@ import { DecisionPanel } from "@/components/decision-panel";
 import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { NextActionButton } from "@/components/next-action-button";
+import { NextStepBar, onThisPage } from "@/components/next-step";
 import { PageHeader } from "@/components/page-header";
 import { PostPreview } from "@/components/post-preview";
 import { RequestComposer } from "@/components/request-composer";
+import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 import { buildJourney, decisionLabel, nextAction, showFollowUpRequest } from "@/lib/journey";
 
 export default function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { state, error, reload } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Loading review…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state || !state.client) return <LoadingLine label="Loading review…" />;
 
   const pending = state.approvals.find((item) => item.status === "PENDING");
   const reviewAssets = pending
@@ -25,6 +27,7 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
   const businessName = state.client.businessName || state.project.name;
   const waiting = Boolean(pending);
   const reviewStage = buildJourney(state).find((item) => item.id === "review");
+  const action = nextAction(state);
 
   return (
     <div className="grid min-w-0 gap-6">
@@ -35,15 +38,15 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
         aside={reviewStage ? <HumanStatusPill status={reviewStage.status} /> : null}
       />
       {waiting ? (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
-          These drafts are not approved. Choose approve, revision, or hold. Leaving the page does not decide.
-        </p>
-      ) : null}
+        <Banner tone="warning">These drafts are not approved. Choose approve, revision, or hold. Leaving the page does not decide.</Banner>
+      ) : (
+        <NextStepBar action={action} projectId={id} active={onThisPage(action, id, "review")} onDone={() => void reload()} />
+      )}
       {state.pipeline.state === "failed" ? (
         <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
           <FailedJobs jobs={state.jobs} />
           <div className="mt-3">
-            <NextActionButton action={nextAction(state)} projectId={id} onDone={() => void reload()} />
+            <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
           </div>
         </section>
       ) : null}

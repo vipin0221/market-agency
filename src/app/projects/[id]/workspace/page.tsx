@@ -5,8 +5,10 @@ import { DecisionPanel } from "@/components/decision-panel";
 import { OperatorNotice } from "@/components/operator-notice";
 import { DeskBrief } from "@/components/desk-brief";
 import { OutcomeBanner } from "@/components/outcome-banner";
+import { PageHeader } from "@/components/page-header";
 import { PostCard } from "@/components/post-card";
 import { StatusPill } from "@/components/status-pill";
+import { Banner, EmptyState, LoadingLine, fieldClass, primaryButtonClass } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 
 export default function WorkspacePage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,8 +18,8 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Reading the project database…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading the workspace…" />;
 
   const assets = state.workflow
     ? state.contentAssets.filter((asset) => asset.workflowId === state.workflow?.id && asset.status !== "REVISION_REQUESTED")
@@ -40,15 +42,14 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6">
+    <div className="grid min-w-0 gap-6">
       <OperatorNotice>Pipeline, agent keys, and model status. The default path is Overview, Journey, Content, and Review.</OperatorNotice>
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">AI workspace</p>
-          <h1 className="mt-1 font-serif text-4xl">Request, agents, content</h1>
-        </div>
-        <StatusPill value={state.llmConfigured ? "LLM" : "GENERATED_WITHOUT_LLM"} />
-      </header>
+      <PageHeader
+        kicker="AI workspace"
+        title="Request, agents, content"
+        lede="A request here writes drafts only. Review still has to approve them. Nothing is posted."
+        aside={<StatusPill value={state.llmConfigured ? "LLM" : "GENERATED_WITHOUT_LLM"} />}
+      />
       <form onSubmit={submitRequest} className="rounded-xl border border-line bg-panel p-5 shadow-card">
         <label className="block text-sm">
           <span className="mb-1 block font-medium">New marketing request</span>
@@ -56,14 +57,20 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
             value={request}
             onChange={(event) => setRequest(event.target.value)}
             rows={4}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+            className={fieldClass}
             placeholder="Say what to make, for whom, and on which channels."
           />
         </label>
-        <button type="submit" disabled={pending} className="mt-3 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50">
-          {pending ? "Queuing…" : "Start workflow"}
+        <button type="submit" disabled={pending} className={`mt-3 ${primaryButtonClass}`}>
+          {pending ? "Queuing…" : "Start drafts"}
         </button>
-        {formError ? <p className="mt-2 text-sm text-rose-800">{formError}</p> : null}
+        {formError ? (
+          <div className="mt-3">
+            <Banner tone="error" role="alert">
+              {formError}
+            </Banner>
+          </div>
+        ) : null}
       </form>
       {state.workflow ? (
         <>
@@ -77,7 +84,7 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
             llmProvider={state.llmProvider}
             llmModel={state.llmModel}
           />
-          <div className="grid items-start gap-6 xl:grid-cols-[18rem_minmax(0,1fr)]">
+          <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[18rem_minmax(0,1fr)]">
             <section className="grid gap-2">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Pipeline</h2>
               {earlyAgents(state.agents).map((agent) => (
@@ -102,7 +109,7 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
           </div>
         </>
       ) : (
-        <p className="text-sm text-ink-soft">No workflow yet. Submit a request to queue the orchestrator.</p>
+        <EmptyState title="No request yet">Next: write a marketing request above. It queues drafts. It does not post.</EmptyState>
       )}
     </div>
   );

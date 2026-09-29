@@ -1,6 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Banner, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 
 export function AccountPanel({ email }: { email: string }) {
   return (
@@ -12,6 +14,7 @@ export function AccountPanel({ email }: { email: string }) {
 }
 
 function PasswordForm({ email }: { email: string }) {
+  const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -31,31 +34,32 @@ function PasswordForm({ email }: { email: string }) {
     const data = (await response.json().catch(() => null)) as { message?: string } | null;
     if (!response.ok) setError(data?.message || "The password was not changed.");
     else {
-      setMessage(data?.message || "Password updated.");
+      setMessage(data?.message || "Password updated. You stay signed in.");
       setCurrentPassword("");
       setNewPassword("");
+      router.refresh();
     }
     setPending(false);
   }
 
   return (
     <form onSubmit={submit} className="rounded-2xl border border-line bg-panel p-5 shadow-card">
-      <h2 className="font-serif text-3xl">Change password</h2>
+      <h2 className="font-serif text-2xl">Change password</h2>
       <p className="mt-1 text-sm leading-6 text-ink-soft">Signed in as {email}. The new password replaces the one stored for this Operator.</p>
       <div className="mt-4 grid gap-3">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">Current password</span>
+          <span className="mb-1.5 block font-medium">Current password</span>
           <input
             required
             type="password"
             autoComplete="current-password"
             value={currentPassword}
             onChange={(event) => setCurrentPassword(event.target.value)}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+            className={fieldClass}
           />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">New password</span>
+          <span className="mb-1.5 block font-medium">New password</span>
           <input
             required
             type="password"
@@ -63,13 +67,25 @@ function PasswordForm({ email }: { email: string }) {
             minLength={8}
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+            className={fieldClass}
           />
         </label>
       </div>
-      {error ? <p className="mt-3 text-sm text-rose-800">{error}</p> : null}
-      {message ? <p className="mt-3 text-sm text-pine">{message}</p> : null}
-      <button type="submit" disabled={pending} className="mt-4 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50">
+      {error ? (
+        <div className="mt-3">
+          <Banner tone="error" role="alert">
+            {error}
+          </Banner>
+        </div>
+      ) : null}
+      {message ? (
+        <div className="mt-3">
+          <Banner tone="success" role="status">
+            {message}
+          </Banner>
+        </div>
+      ) : null}
+      <button type="submit" disabled={pending} className={`mt-4 ${primaryButtonClass}`}>
         {pending ? "Saving…" : "Update password"}
       </button>
     </form>
@@ -77,6 +93,7 @@ function PasswordForm({ email }: { email: string }) {
 }
 
 function OperatorForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -101,36 +118,26 @@ function OperatorForm() {
       setEmail("");
       setName("");
       setPassword("");
+      router.refresh();
     }
     setPending(false);
   }
 
   return (
     <form onSubmit={submit} className="rounded-2xl border border-line bg-panel p-5 shadow-card">
-      <h2 className="font-serif text-3xl">Add an operator</h2>
-      <p className="mt-1 text-sm leading-6 text-ink-soft">A second person can sign in on this machine. There is no cloud directory.</p>
+      <h2 className="font-serif text-2xl">Add an operator</h2>
+      <p className="mt-1 text-sm leading-6 text-ink-soft">A second person can sign in on this machine. There is no cloud directory. They appear in the list above after the account is created.</p>
       <div className="mt-4 grid gap-3">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">Name</span>
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
-          />
+          <span className="mb-1.5 block font-medium">Name</span>
+          <input value={name} onChange={(event) => setName(event.target.value)} className={fieldClass} />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">Email</span>
-          <input
-            required
-            type="email"
-            autoComplete="off"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
-          />
+          <span className="mb-1.5 block font-medium">Email</span>
+          <input required type="email" autoComplete="off" value={email} onChange={(event) => setEmail(event.target.value)} className={fieldClass} />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">Password</span>
+          <span className="mb-1.5 block font-medium">Password</span>
           <input
             required
             type="password"
@@ -138,13 +145,25 @@ function OperatorForm() {
             minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+            className={fieldClass}
           />
         </label>
       </div>
-      {error ? <p className="mt-3 text-sm text-rose-800">{error}</p> : null}
-      {message ? <p className="mt-3 text-sm text-pine">{message}</p> : null}
-      <button type="submit" disabled={pending} className="mt-4 rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50">
+      {error ? (
+        <div className="mt-3">
+          <Banner tone="error" role="alert">
+            {error}
+          </Banner>
+        </div>
+      ) : null}
+      {message ? (
+        <div className="mt-3">
+          <Banner tone="success" role="status">
+            {message}
+          </Banner>
+        </div>
+      ) : null}
+      <button type="submit" disabled={pending} className={`mt-4 ${secondaryButtonClass}`}>
         {pending ? "Creating…" : "Create operator"}
       </button>
     </form>

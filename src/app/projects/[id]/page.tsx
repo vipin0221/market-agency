@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use } from "react";
 import { FailedJobs } from "@/components/failed-jobs";
+import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
 import { NextActionButton } from "@/components/next-action-button";
@@ -14,8 +15,8 @@ import { buildJourney, currentPosts, focusStage, nextAction, showFollowUpRequest
 export default function OverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { state, error, reload } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Loading this brand…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state || !state.client) return <LoadingLine label="Loading this brand…" />;
 
   const action = nextAction(state);
   const stages = buildJourney(state);
@@ -62,13 +63,15 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
           </Link>
         </div>
         {posts.length === 0 ? (
-          <p className="mt-3 rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">
+          <div className="mt-3">
+          <EmptyState>
             {state.pipeline.state === "failed"
               ? "Next: retry the failed step above. This list stays empty until a draft is actually written."
               : state.pipeline.state === "queued" || state.pipeline.state === "running"
                 ? "Next: wait here. Drafts show up when the content step finishes. Waiting does not approve them."
                 : "Next: write a request below if this brand does not have one yet. Nothing is posted from it."}
-          </p>
+          </EmptyState>
+          </div>
         ) : (
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {posts.map((asset) => (

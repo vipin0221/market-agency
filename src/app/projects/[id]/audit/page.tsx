@@ -2,21 +2,26 @@
 
 import { use } from "react";
 import { OperatorNotice } from "@/components/operator-notice";
+import { PageHeader } from "@/components/page-header";
+import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 
 export default function AuditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { state, error } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Reading the audit log…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading the audit log…" />;
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <OperatorNotice>Change log for this brand.</OperatorNotice>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-accent">Audit trail</p>
-      <h1 className="mt-1 font-serif text-4xl">What changed</h1>
-      <ol className="mt-6 grid gap-3">
-        {state.auditLogs.length === 0 ? <li className="text-sm text-ink-soft">No events yet.</li> : null}
+    <div className="grid min-w-0 gap-6">
+      <OperatorNotice>Change log for this brand. These are stored events, not a live feed.</OperatorNotice>
+      <PageHeader kicker="Audit" title="What changed" lede="Each row is something this workspace recorded. Nothing here publishes or connects an account." />
+      <ol className="grid gap-3">
+        {state.auditLogs.length === 0 ? (
+          <li>
+            <EmptyState>No events yet. The next change you make on this brand will show up here.</EmptyState>
+          </li>
+        ) : null}
         {state.auditLogs.map((entry) => (
           <li key={entry.id} className="rounded-xl border border-line bg-panel px-4 py-3">
             <p className="text-xs uppercase tracking-wide text-ink-soft">

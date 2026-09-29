@@ -3,23 +3,27 @@
 import { use } from "react";
 import { FailedJobs } from "@/components/failed-jobs";
 import { OperatorNotice } from "@/components/operator-notice";
+import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
+import { Banner, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 
 export default function AgentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { state, error } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Reading agent runs…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading agent runs…" />;
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <OperatorNotice>Agent run table. The status names here are internal.</OperatorNotice>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-accent">Agent status</p>
-      <h1 className="mt-1 font-serif text-4xl">From the agent run table</h1>
-      <p className="mt-2 text-sm text-ink-soft">Idle, waiting, and skipped are derived from the plan. Queued, running, failed, and needs-you are stored. A failed step stays failed until you retry it from Overview.</p>
+    <div className="grid min-w-0 gap-6">
+      <OperatorNotice>Agent run table. The status names here are internal. A failed step stays failed until you retry it from Overview.</OperatorNotice>
+      <PageHeader
+        kicker="Agents"
+        title="From the agent run table"
+        lede="Idle, waiting, and skipped are derived from the plan. Queued, running, failed, and needs-you are stored. This table scrolls inside the card on a narrow screen."
+      />
       <FailedJobs jobs={state.jobs} />
-      <div className="mt-6 min-w-0 overflow-x-auto rounded-xl border border-line bg-panel">
+      <div className="min-w-0 overflow-x-auto rounded-xl border border-line bg-panel">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-line text-xs uppercase tracking-wide text-ink-soft">
             <tr>

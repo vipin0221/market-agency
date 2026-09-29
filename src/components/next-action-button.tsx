@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { primaryButtonClass } from "@/components/ui";
 import type { NextAction } from "@/lib/journey";
 
 export function NextActionButton({
@@ -35,7 +36,7 @@ export function NextActionButton({
     }
   }
 
-  const className = "inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50";
+  const className = primaryButtonClass;
 
   return (
     <div>

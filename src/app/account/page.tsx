@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AccountPanel } from "@/components/account-panel";
 import { PasswordNotice } from "@/components/password-notice";
 import { SignOutButton } from "@/components/sign-out-button";
+import { AppTopBar } from "@/components/ui";
 import { requirePageOperator } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -20,20 +21,15 @@ export default async function AccountPage() {
   });
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <div className="flex items-center justify-between gap-3">
-        <Link href="/" className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-          Agency OS
+    <main className="mx-auto min-w-0 max-w-2xl overflow-x-clip px-4 py-8 sm:px-6 sm:py-10">
+      <AppTopBar email={session.operator.email}>
+        <Link href="/" className="font-semibold">
+          Brands
         </Link>
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/" className="font-semibold">
-            Brands
-          </Link>
-          <SignOutButton className="font-semibold" />
-        </div>
-      </div>
-      <h1 className="mt-6 font-serif text-5xl">Account</h1>
-      <p className="mt-3 text-sm leading-6 text-ink-soft">Local operators only. Passwords are stored as a hash. Signing out ends this browser session.</p>
+        <SignOutButton className="font-semibold" />
+      </AppTopBar>
+      <h1 className="mt-6 break-words font-serif text-3xl leading-tight sm:text-4xl">Account</h1>
+      <p className="mt-3 text-sm leading-6 text-ink-soft">Local operators only. Passwords are stored as a hash. Signing out ends this browser session and returns you to sign-in.</p>
       <div className="mt-4">
         <PasswordNotice mustChange={session.operator.mustChangePassword} />
       </div>

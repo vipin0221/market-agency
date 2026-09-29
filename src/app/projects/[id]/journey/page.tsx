@@ -8,7 +8,9 @@ import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
 import { NextActionButton } from "@/components/next-action-button";
+import { NextStepBar, onThisPage } from "@/components/next-step";
 import { PageHeader } from "@/components/page-header";
+import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 import { buildJourney, excerptsFor, focusStage, nextAction, type StageId } from "@/lib/journey";
 
@@ -17,8 +19,8 @@ const order: StageId[] = ["brand", "research", "strategy", "content", "review", 
 export default function JourneyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { state, error, reload } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Loading this brand…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state || !state.client) return <LoadingLine label="Loading this brand…" />;
 
   const stages = buildJourney(state);
   const client = state.client;
@@ -37,9 +39,10 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
           <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{state.workflow.requestText}</p>
         </section>
       ) : (
-        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-sm leading-6 text-ink-soft">
-          No request yet. Next: write one on Overview. Nothing is posted from it.
-        </p>
+        <EmptyState title="No request yet">Next: write one on Overview. Nothing is posted from it.</EmptyState>
+      )}
+      {state.pipeline.state === "failed" || state.pipeline.stalled ? null : (
+        <NextStepBar action={action} projectId={id} active={onThisPage(action, id, "journey")} onDone={() => void reload()} />
       )}
       {state.pipeline.state === "failed" || state.pipeline.stalled ? (
         <section className="rounded-2xl border border-rose-200 bg-panel px-5 py-5">

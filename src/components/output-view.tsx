@@ -11,11 +11,11 @@ export function OutputView({ output }: { output: Output }) {
         <StatusPill value={output.status} />
         <StatusPill value={output.generationMode} />
       </div>
-      <p className="mt-2 text-sm leading-6 text-ink-soft">{output.summary}</p>
+      <p className="mt-2 break-words text-sm leading-6 text-ink-soft">{output.summary}</p>
       <div className="mt-4 text-sm">{renderBody(output.body)}</div>
       <details className="mt-4">
         <summary className="cursor-pointer text-xs uppercase tracking-wide text-ink-soft">Stored JSON</summary>
-        <pre className="mt-2 overflow-auto rounded-md bg-ink px-3 py-3 text-xs leading-5 text-paper">{JSON.stringify(output.body, null, 2)}</pre>
+        <pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-ink px-3 py-3 text-xs leading-5 text-paper">{JSON.stringify(output.body, null, 2)}</pre>
       </details>
     </article>
   );

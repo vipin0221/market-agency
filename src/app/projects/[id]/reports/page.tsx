@@ -1,9 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { use, useState } from "react";
 import { HumanStatusPill } from "@/components/human-status";
+import { NextStepBar, onThisPage } from "@/components/next-step";
+import { PageHeader } from "@/components/page-header";
+import { Banner, EmptyState, LoadingLine, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
-import { buildJourney } from "@/lib/journey";
+import { buildJourney, nextAction } from "@/lib/journey";
 
 export default function ReportsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,10 +18,11 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
   const [message, setMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Loading reports…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading reports…" />;
 
   const stage = buildJourney(state).find((item) => item.id === "reports");
+  const action = nextAction(state);
   const insights = state.outputs.find((output) => output.kind === "insights" && output.workflowId === state.workflow?.id);
   const optimization = state.outputs.find((output) => output.kind === "optimization" && output.workflowId === state.workflow?.id);
   const insufficient = insights?.body.insufficient === true;
@@ -53,21 +58,28 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <div className="mx-auto grid max-w-3xl gap-6">
-      <header>
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Reports</p>
-          {stage ? <HumanStatusPill status={stage.status} /> : null}
-        </div>
-        <h1 className="mt-1 font-serif text-4xl">Results</h1>
-        <p className="mt-2 text-sm leading-6 text-ink-soft">
-          Only results you record show up here. Nothing is pulled from an ad account, and missing numbers are not filled in.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Reports"
+        title="Results"
+        lede="Only results you record show up here. Nothing is pulled from an ad account, and missing numbers are not filled in."
+        aside={stage ? <HumanStatusPill status={stage.status} /> : null}
+      />
+      <NextStepBar
+        action={action}
+        projectId={id}
+        active={onThisPage(action, id, "reports")}
+        onDone={() => void reload()}
+        follow={
+          <Link href={`/projects/${id}`} className="font-semibold text-accent">
+            Brand overview
+          </Link>
+        }
+      />
       {state.metrics.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-sm leading-6 text-ink-soft">
+        <EmptyState title="Nothing recorded">
           Next: record a result you actually observed, or skip reports. No numbers are imported, and none are invented.
-        </p>
+        </EmptyState>
       ) : (
         <ul className="grid gap-2">
           {state.metrics.map((metric) => (
@@ -83,14 +95,24 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
           ))}
         </ul>
       )}
-      <form onSubmit={addMetric} className="grid gap-3 rounded-2xl border border-line bg-panel p-5">
+      <form onSubmit={addMetric} className="grid min-w-0 gap-3 rounded-2xl border border-line bg-panel p-5 shadow-card">
         <h2 className="font-serif text-2xl">Record a result</h2>
+        <p className="text-sm leading-6 text-ink-soft">Type what you observed. Saving does not sync an account and does not invent a number.</p>
         <div className="grid gap-3 sm:grid-cols-3">
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" className="rounded-md border border-line bg-white px-3 py-2 text-sm" />
-          <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="Value you observed" className="rounded-md border border-line bg-white px-3 py-2 text-sm" />
-          <input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Note" className="rounded-md border border-line bg-white px-3 py-2 text-sm" />
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Name</span>
+            <input required value={name} onChange={(event) => setName(event.target.value)} className={fieldClass} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Value you observed</span>
+            <input required value={value} onChange={(event) => setValue(event.target.value)} className={fieldClass} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium">Note</span>
+            <input value={note} onChange={(event) => setNote(event.target.value)} className={fieldClass} />
+          </label>
         </div>
-        <button type="submit" className="w-fit rounded-md bg-ink px-3 py-2 text-sm font-semibold text-paper">
+        <button type="submit" className={`w-fit ${primaryButtonClass}`}>
           Save result
         </button>
       </form>
@@ -106,12 +128,12 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
           <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{insights.summary}</p>
         )}
         {optimization && optimization.status !== "BLOCKED" ? <p className="mt-3 text-sm leading-6">{optimization.summary}</p> : null}
-        <button type="button" onClick={() => void refresh()} className="mt-4 rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
+        <button type="button" onClick={() => void refresh()} className={`mt-4 ${secondaryButtonClass}`}>
           Refresh written report
         </button>
       </section>
-      {formError ? <p className="text-sm text-rose-800">{formError}</p> : null}
-      {message ? <p className="text-sm text-pine">{message}</p> : null}
+      {formError ? <Banner tone="error" role="alert">{formError}</Banner> : null}
+      {message ? <Banner tone="success" role="status">{message}</Banner> : null}
     </div>
   );
 }
