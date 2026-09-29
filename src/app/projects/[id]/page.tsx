@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { use } from "react";
+import { BriefChecklist } from "@/components/brief-checklist";
+import { FailedJobs } from "@/components/failed-jobs";
+import { JobProgress } from "@/components/job-progress";
+import { Banner, EmptyState, LoadingLine, Section } from "@/components/ui";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
+import { NextActionButton } from "@/components/next-action-button";
 import { PostPreview } from "@/components/post-preview";
 import { RequestComposer } from "@/components/request-composer";
 import { useProjectState } from "@/components/use-project-state";
@@ -12,49 +17,80 @@ import { buildJourney, currentPosts, focusStage, nextAction, showFollowUpRequest
 export default function OverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { state, error, reload } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Loading this brand…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state || !state.client) return <LoadingLine label="Loading this brand…" />;
 
   const action = nextAction(state);
   const stages = buildJourney(state);
   const posts = currentPosts(state).slice(0, 4);
-  const frame =
-    action.status === "blocked" ? "border-rose-200" : action.status === "waiting" ? "border-amber-200" : "border-line";
+  const done = stages.filter((stage) => stage.status === "done").length;
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-8">
-      <section className={`rounded-3xl border bg-panel px-6 py-7 shadow-card ${frame}`}>
-        <HumanStatusPill status={action.status} />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">{state.client.businessName}</p>
-        <h1 className="mt-1 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">{action.title}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">{action.detail}</p>
-        {state.workflow?.requestText ? <p className="mt-4 max-w-2xl line-clamp-3 text-sm leading-6">“{state.workflow.requestText}”</p> : null}
-        <div className="mt-5">
-          {action.href.startsWith("#") ? (
-            <a href={action.href} className="inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
-              {action.cta}
-            </a>
-          ) : (
-            <Link href={action.href} className="inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
-              {action.cta}
+    <div className="grid min-w-0 gap-6">
+      <header className="border-b border-line pb-5">
+        <p className="text-xs font-medium text-ink-soft">{state.client.businessName}</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Overview</h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-ink-soft">Where this brand stands. Nothing on this page is posted.</p>
+      </header>
+      <Section
+        title={action.title}
+        lede={action.detail}
+        action={
+          <>
+            <HumanStatusPill status={action.status} />
+            <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
+          </>
+        }
+      >
+        <p className="text-xs font-medium text-ink-soft">
+          Pipeline · {state.pipeline.label}
+          {state.pipeline.agentName ? ` · ${state.pipeline.agentName}` : ""}
+        </p>
+        {state.workflow?.requestText ? <p className="mt-3 max-w-2xl break-words text-sm leading-6">“{state.workflow.requestText}”</p> : null}
+        <FailedJobs jobs={state.jobs} />
+        <div className="mt-3 flex flex-wrap gap-4 text-sm">
+          {posts.length > 0 ? (
+            <Link href={`/projects/${id}/content`} className="font-medium text-accent">
+              Preview posts
             </Link>
-          )}
+          ) : null}
+          {action.href.endsWith("/review") ? null : state.approval.status === "AWAITING_APPROVAL" ? (
+            <Link href={`/projects/${id}/review`} className="font-medium text-accent">
+              Review drafts
+            </Link>
+          ) : null}
         </div>
+      </Section>
+      <JobProgress jobs={state.jobs} pipeline={state.pipeline} />
+      <BriefChecklist projectId={id} client={state.client} />
+      <section className="min-w-0">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-tight">Journey</h2>
+          <p className="text-xs font-medium text-ink-soft">
+            {done} of {stages.length}
+          </p>
+        </div>
+        <JourneyStrip stages={stages} currentId={focusStage(stages)} />
       </section>
-      <JourneyStrip stages={stages} currentId={focusStage(stages)} />
       <section>
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-serif text-2xl">Latest posts</h2>
-          <Link href={`/projects/${id}/content`} className="text-sm font-semibold text-accent">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-tight">Latest posts</h2>
+          <Link href={`/projects/${id}/content`} className="text-sm font-medium text-accent">
             All posts
           </Link>
         </div>
         {posts.length === 0 ? (
-          <p className="mt-3 rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm text-ink-soft">
-            Posts will show up here as soon as they are drafted.
-          </p>
+          <div className="mt-3">
+          <EmptyState>
+            {state.pipeline.state === "failed"
+              ? "Next: retry the failed step above. This list stays empty until a draft is actually written."
+              : state.pipeline.state === "queued" || state.pipeline.state === "running"
+                ? "Next: wait here. Drafts show up when the content step finishes. Waiting does not approve them."
+                : "Next: write a request below if this brand does not have one yet. Nothing is posted from it."}
+          </EmptyState>
+          </div>
         ) : (
-          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {posts.map((asset) => (
               <PostPreview key={asset.id} asset={asset} businessName={state.client?.businessName || state.project.name} website={state.client?.website} />
             ))}

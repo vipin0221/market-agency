@@ -1,17 +1,19 @@
 "use client";
 
 import { use } from "react";
-import { DecisionPanel } from "@/components/decision-panel";
+import Link from "next/link";
 import { OperatorNotice } from "@/components/operator-notice";
-import { PostCard } from "@/components/post-card";
+import { PostDecisionLog } from "@/components/post-decision";
+import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
+import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 
 export default function ApprovalsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error, reload } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Reading approvals…</p>;
+  const { state, error } = useProjectState(id);
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading approvals…" />;
 
   const pending = state.approvals.find((item) => item.status === "PENDING");
   const reviewAssets = pending
@@ -19,27 +21,46 @@ export default function ApprovalsPage({ params }: { params: Promise<{ id: string
     : [];
 
   return (
-    <div className="mx-auto grid max-w-4xl gap-6">
-      <OperatorNotice>Decision log. Review is where you approve, ask for a revision, or hold.</OperatorNotice>
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Approval center</p>
-        <h1 className="mt-1 font-serif text-4xl">Human decisions</h1>
-        <p className="mt-2 text-sm text-ink-soft">Approve, request a revision, or hold. Leaving this page does not approve anything.</p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <OperatorNotice>
+        Decision log. The working decision is on{" "}
+        <Link href={`/projects/${id}/review`} className="font-semibold text-accent">
+          Review
+        </Link>
+        . Leaving this page does not approve anything.
+      </OperatorNotice>
+      <PageHeader kicker="Approval log" title="Human decisions" lede="Approve, request a revision, or hold. Silence is not approval, and nothing is posted." />
       {pending ? (
-        <>
-          <DecisionPanel approvalId={pending.id} onDone={() => void reload()} />
-          <div className="grid gap-4">
-            {reviewAssets.map((asset) => (
-              <PostCard key={asset.id} asset={asset} />
-            ))}
-          </div>
-        </>
+        <p className="text-sm leading-6">
+          {reviewAssets.length} draft{reviewAssets.length === 1 ? "" : "s"} still waiting. Decide each one on{" "}
+          <Link href={`/projects/${id}/review`} className="font-semibold text-accent">
+            Review
+          </Link>
+          .
+        </p>
       ) : (
-        <p className="rounded-xl border border-dashed border-line bg-panel px-4 py-6 text-sm text-ink-soft">No approval is pending.</p>
+        <EmptyState title="Nothing is waiting">
+          No approval is pending. Next: open Review when drafts are ready. Silence is not approval.
+        </EmptyState>
       )}
       <section>
-        <h2 className="font-serif text-2xl">Decision log</h2>
+        <h2 className="font-serif text-2xl">Per draft</h2>
+        <ul className="mt-3 grid gap-2">
+          {state.contentAssets.length === 0 ? <li className="text-sm text-ink-soft">No drafts yet.</li> : null}
+          {state.contentAssets.map((asset) => (
+            <li key={asset.id} className="rounded-xl border border-line bg-panel px-4 py-3">
+              <p className="break-words text-sm font-medium">
+                {asset.platform} · {asset.hook}
+              </p>
+              <div className="mt-1">
+                <PostDecisionLog asset={asset} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl">Round log</h2>
         <ul className="mt-3 grid gap-2">
           {state.approvals.length === 0 ? <li className="text-sm text-ink-soft">No decisions recorded.</li> : null}
           {state.approvals.map((item) => (

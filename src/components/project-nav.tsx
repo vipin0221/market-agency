@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SignOutButton } from "@/components/sign-out-button";
+import { ProductMark } from "@/components/ui";
 
 const primary = [
   ["Overview", ""],
@@ -29,103 +31,222 @@ export function ProjectNav({
   projectName,
   businessName,
   projects,
+  operatorEmail,
+  mustChangePassword,
+  children,
 }: {
   projectId: string;
   projectName: string;
   businessName: string;
   projects: { id: string; name: string }[];
+  operatorEmail: string;
+  mustChangePassword: boolean;
+  children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const base = `/projects/${projectId}`;
-  const advancedHrefs = advanced.map(([, href]) => `${base}${href}`);
-  const onAdvanced = advancedHrefs.some((href) => pathname === href || pathname.startsWith(`${href}/`));
-  const [open, setOpen] = useState(onAdvanced);
+  const [drawer, setDrawer] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
-    if (onAdvanced) setOpen(true);
-  }, [onAdvanced]);
+    setDrawer(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!drawer) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDrawer(false);
+    };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [drawer]);
+
+  const navProps = {
+    projectId,
+    projectName,
+    businessName,
+    projects,
+    operatorEmail,
+    pathname,
+    advancedOpen,
+    setAdvancedOpen,
+    onNavigate: () => setDrawer(false),
+    mustChangePassword,
+  };
 
   return (
-    <>
-      <aside className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col md:bg-ink md:text-paper">
-        <div className="border-b border-white/10 px-5 py-5">
-          <Link href="/" className="text-xs uppercase tracking-[0.16em] text-paper/70">
-            Agency OS
-          </Link>
-          <p className="mt-2 font-serif text-2xl leading-tight">{projectName}</p>
-          {businessName && businessName !== projectName ? <p className="mt-1 text-sm text-paper/70">{businessName}</p> : null}
-        </div>
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-          {primary.map(([label, href]) => (
-            <NavLink key={label} href={`${base}${href}`} pathname={pathname} exact={href === ""}>
-              {label}
-            </NavLink>
-          ))}
-          <details
-            className="mt-4 border-t border-white/10 pt-3"
-            open={open}
-            onToggle={(event) => setOpen(event.currentTarget.open)}
-          >
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-paper/55">Advanced</summary>
-            <p className="px-3 pb-2 text-[11px] leading-4 text-paper/45">Operator tools. The routes stay available.</p>
-            <div className="grid gap-1">
-              {advanced.map(([label, href]) => (
-                <NavLink key={label} href={`${base}${href}`} pathname={pathname}>
-                  {label}
-                </NavLink>
-              ))}
-            </div>
-          </details>
-        </nav>
-        <div className="border-t border-white/10 px-3 py-3">
-          <p className="px-2 text-[11px] uppercase tracking-wide text-paper/50">Brands</p>
-          {projects.length > 1
-            ? projects.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/projects/${item.id}`}
-                  className={`block truncate rounded-md px-2 py-1.5 text-sm hover:bg-white/10 ${item.id === projectId ? "bg-white/10" : "text-paper/80"}`}
-                >
-                  {item.name}
-                </Link>
-              ))
-            : null}
-          {projects.length > 1 ? (
-            <Link href="/" className="mt-1 block rounded-md px-2 py-1.5 text-sm text-paper/70 hover:bg-white/10">
-              All brands
-            </Link>
-          ) : null}
-          <Link href="/new" className="mt-1 block rounded-md border border-white/15 px-3 py-2 text-center text-sm hover:bg-white/10">
-            New brand
-          </Link>
-        </div>
+    <div className="flex min-h-dvh w-full bg-paper">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 border-r border-line bg-panel lg:flex">
+        <Sidebar {...navProps} />
       </aside>
-      <div className="sticky top-0 z-20 border-b border-white/10 bg-ink text-paper md:hidden">
-        <div className="flex items-center justify-between gap-3 px-3 py-2">
-          <Link href="/" className="text-xs uppercase tracking-[0.16em] text-paper/70">
-            Agency OS
-          </Link>
-          <p className="truncate text-sm">{projectName}</p>
+      {drawer ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button type="button" className="absolute inset-0 bg-ink/40" aria-label="Close menu" onClick={() => setDrawer(false)} />
+          <aside
+            id="app-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation"
+            className="relative flex h-full w-[min(18rem,88vw)] flex-col border-r border-line bg-panel shadow-card"
+          >
+            <div className="flex justify-end border-b border-line px-3 py-2">
+              <button type="button" onClick={() => setDrawer(false)} className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-soft hover:bg-paper">
+                Close
+              </button>
+            </div>
+            <Sidebar {...navProps} />
+          </aside>
         </div>
-        <div className="flex gap-1 overflow-x-auto px-3 pb-2">
-          {primary.map(([label, href]) => (
-            <NavLink key={label} href={`${base}${href}`} pathname={pathname} exact={href === ""} compact>
-              {label}
-            </NavLink>
-          ))}
+      ) : null}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-panel/95 px-4 py-2.5 backdrop-blur lg:hidden">
+          <button
+            type="button"
+            aria-expanded={drawer}
+            aria-controls="app-drawer"
+            onClick={() => setDrawer(true)}
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-line bg-panel px-2.5 text-sm font-medium"
+          >
+            <MenuIcon />
+            Menu
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{projectName}</p>
+            {businessName && businessName !== projectName ? <p className="truncate text-xs text-ink-soft">{businessName}</p> : null}
+          </div>
+        </header>
+        <div className="min-w-0 flex-1 overflow-x-clip px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="mx-auto w-full min-w-0 max-w-6xl">{children}</div>
         </div>
-        <details className="border-t border-white/10 px-3 py-2" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.14em] text-paper/60">Advanced</summary>
-          <div className="mt-2 flex gap-1 overflow-x-auto pb-1">
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({
+  projectId,
+  projectName,
+  projects,
+  operatorEmail,
+  pathname,
+  advancedOpen,
+  setAdvancedOpen,
+  onNavigate,
+  mustChangePassword,
+}: {
+  projectId: string;
+  projectName: string;
+  businessName: string;
+  projects: { id: string; name: string }[];
+  operatorEmail: string;
+  pathname: string;
+  advancedOpen: boolean;
+  setAdvancedOpen: (open: boolean) => void;
+  onNavigate: () => void;
+  mustChangePassword: boolean;
+}) {
+  const base = `/projects/${projectId}`;
+  const onAdvanced = advanced.some(([, href]) => {
+    const path = `${base}${href}`;
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
+
+  useEffect(() => {
+    if (onAdvanced) setAdvancedOpen(true);
+  }, [onAdvanced, setAdvancedOpen]);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 space-y-3 border-b border-line px-3 py-3">
+        <Link href="/" onClick={onNavigate} className="inline-flex items-center gap-2 px-1 text-sm font-semibold tracking-tight">
+          <ProductMark />
+          Agency OS
+        </Link>
+        <BrandSwitcher projectId={projectId} projectName={projectName} projects={projects} onNavigate={onNavigate} />
+      </div>
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-3">
+        {primary.map(([label, href]) => (
+          <NavLink key={label} href={`${base}${href}`} pathname={pathname} exact={href === ""} onNavigate={onNavigate}>
+            {label}
+          </NavLink>
+        ))}
+        <details className="mt-3 border-t border-line pt-3" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>
+          <summary className="cursor-pointer list-none rounded-lg px-2.5 py-2 text-[11px] font-medium uppercase tracking-[0.12em] text-ink-soft [&::-webkit-details-marker]:hidden">
+            Advanced
+          </summary>
+          <div className="mt-1 grid gap-0.5">
             {advanced.map(([label, href]) => (
-              <NavLink key={label} href={`${base}${href}`} pathname={pathname} compact>
+              <NavLink key={label} href={`${base}${href}`} pathname={pathname} onNavigate={onNavigate}>
                 {label}
               </NavLink>
             ))}
           </div>
         </details>
+      </nav>
+      <div className="shrink-0 space-y-2 border-t border-line px-3 py-3">
+        {mustChangePassword ? (
+          <Link href="/account" onClick={onNavigate} className="block rounded-lg bg-amber-50 px-2.5 py-2 text-xs leading-5 text-amber-900 ring-1 ring-inset ring-amber-200">
+            Default password is still in use. Change it in Account.
+          </Link>
+        ) : null}
+        <p className="truncate px-1 text-xs text-ink-soft">{operatorEmail}</p>
+        <div className="flex items-center gap-3 px-1">
+          <Link href="/account" onClick={onNavigate} className="text-sm text-ink-soft hover:text-ink">
+            Account
+          </Link>
+          <SignOutButton className="text-sm text-ink-soft hover:text-ink" />
+        </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+function BrandSwitcher({
+  projectId,
+  projectName,
+  projects,
+  onNavigate,
+}: {
+  projectId: string;
+  projectName: string;
+  projects: { id: string; name: string }[];
+  onNavigate: () => void;
+}) {
+  return (
+    <details className="group relative">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-line bg-paper px-2 py-1.5 [&::-webkit-details-marker]:hidden">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-ink text-[10px] font-semibold text-white">
+          {initials(projectName)}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">{projectName}</span>
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="shrink-0 text-ink-soft">
+          <path d="M3.5 5.25 7 8.75l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </summary>
+      <div className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-line bg-panel p-1 shadow-card">
+        {projects.map((item) => (
+          <Link
+            key={item.id}
+            href={`/projects/${item.id}`}
+            onClick={onNavigate}
+            className={`block truncate rounded-md px-2 py-1.5 text-sm hover:bg-paper ${item.id === projectId ? "bg-paper font-medium" : "text-ink"}`}
+          >
+            {item.name}
+          </Link>
+        ))}
+        <div className="my-1 border-t border-line" />
+        <Link href="/" onClick={onNavigate} className="block rounded-md px-2 py-1.5 text-sm text-ink-soft hover:bg-paper hover:text-ink">
+          All brands
+        </Link>
+        <Link href="/new" onClick={onNavigate} className="block rounded-md px-2 py-1.5 text-sm text-ink-soft hover:bg-paper hover:text-ink">
+          New brand
+        </Link>
+      </div>
+    </details>
   );
 }
 
@@ -133,27 +254,42 @@ function NavLink({
   href,
   pathname,
   exact,
-  compact,
+  onNavigate,
   children,
 }: {
   href: string;
   pathname: string;
   exact?: boolean;
-  compact?: boolean;
+  onNavigate: () => void;
   children: React.ReactNode;
 }) {
   const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   return (
     <Link
       href={href}
+      onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={
-        compact
-          ? `shrink-0 rounded-md px-2 py-1 text-sm ${active ? "bg-white/15 font-semibold" : "text-paper/80"}`
-          : `rounded-md px-3 py-2 text-sm ${active ? "bg-white/15 font-semibold" : "text-paper/80 hover:bg-white/10"}`
-      }
+      className={`rounded-lg px-2.5 py-2 text-sm ${active ? "bg-paper font-medium text-ink" : "text-ink-soft hover:bg-paper hover:text-ink"}`}
     >
       {children}
     </Link>
+  );
+}
+
+function initials(name: string) {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+  return letters || "•";
+}
+
+function MenuIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="shrink-0">
+      <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
   );
 }

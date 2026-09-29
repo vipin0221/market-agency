@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Banner, fieldClass, primaryButtonClass } from "@/components/ui";
 
 export function RequestComposer({ projectId, onDone }: { projectId: string; onDone?: () => void }) {
   const [request, setRequest] = useState("");
@@ -28,22 +29,24 @@ export function RequestComposer({ projectId, onDone }: { projectId: string; onDo
   return (
     <form id="request" onSubmit={submit} className="scroll-mt-24 rounded-2xl border border-line bg-panel p-5 shadow-card">
       <h2 className="font-serif text-2xl">Another round</h2>
-      <p className="mt-1 text-sm leading-6 text-ink-soft">Describe the next posts in plain language. This does not publish anything.</p>
+      <p className="mt-1 text-sm leading-6 text-ink-soft">Describe the next posts in plain language. This starts drafts only. It does not post anything.</p>
       <textarea
         required
         value={request}
         onChange={(event) => setRequest(event.target.value)}
         rows={4}
         placeholder="Say what to make, for whom, and on which channels."
-        className="mt-4 w-full rounded-md border border-line bg-white px-3 py-2 text-sm outline-none focus:border-accent"
+        className={`mt-4 ${fieldClass}`}
       />
-      <button type="submit" disabled={pending} className="mt-3 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50">
-        {pending ? "Starting…" : "Start"}
+      <button type="submit" disabled={pending} className={`mt-3 ${primaryButtonClass}`}>
+        {pending ? "Starting…" : "Start drafts"}
       </button>
       {error ? (
-        <p role="alert" className="mt-3 text-sm text-rose-800">
-          {error}
-        </p>
+        <div className="mt-3">
+          <Banner tone="error" role="alert">
+            {error}
+          </Banner>
+        </div>
       ) : null}
     </form>
   );

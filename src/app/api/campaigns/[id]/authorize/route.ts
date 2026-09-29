@@ -1,3 +1,4 @@
+import { requireApiOperator } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
@@ -5,6 +6,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiOperator();
+  if (auth instanceof Response) return auth;
   const { id } = await context.params;
   const campaign = await prisma.campaign.findUnique({
     where: { id },

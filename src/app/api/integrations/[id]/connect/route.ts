@@ -1,3 +1,4 @@
+import { requireApiOperator } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
@@ -5,6 +6,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiOperator();
+  if (auth instanceof Response) return auth;
   const { id } = await context.params;
   const integration = await prisma.integration.findUnique({ where: { id } });
   if (!integration) return Response.json({ error: "NOT_FOUND", message: "Integration was not found." }, { status: 404 });

@@ -1,3 +1,4 @@
+import { requireApiOperator } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
@@ -5,6 +6,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiOperator();
+  if (auth instanceof Response) return auth;
   const { id } = await context.params;
   const body = (await request.json().catch(() => null)) as { name?: string; value?: string; note?: string; campaignId?: string } | null;
   const name = body?.name?.trim() ?? "";

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { fieldClass } from "@/components/ui";
 
 type Values = {
   projectName: string;
@@ -146,7 +147,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+        className={fieldClass}
       />
     </label>
   );
@@ -173,7 +174,7 @@ function Area({
         rows={rows}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+        className={fieldClass}
       />
     </label>
   );

@@ -1,15 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { use, useState } from "react";
+import { FailedJobs } from "@/components/failed-jobs";
+import { NextActionButton } from "@/components/next-action-button";
+import { PageHeader } from "@/components/page-header";
 import { PostPreview } from "@/components/post-preview";
+import { Banner, EmptyState, LoadingLine, primaryButtonClass } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
+import { nextAction } from "@/lib/journey";
 
 export default function ContentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error } = useProjectState(id);
+  const { state, error, reload } = useProjectState(id);
   const [platform, setPlatform] = useState("All");
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Loading posts…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state || !state.client) return <LoadingLine label="Loading posts…" />;
 
   const currentId = state.workflow?.id;
   const current = currentId ? state.contentAssets.filter((asset) => asset.workflowId === currentId) : state.contentAssets;
@@ -17,16 +23,31 @@ export default function ContentPage({ params }: { params: Promise<{ id: string }
   const platforms = ["All", ...Array.from(new Set(state.contentAssets.map((asset) => asset.platform)))];
   const match = (item: (typeof current)[number]) => platform === "All" || item.platform === platform;
   const businessName = state.client.businessName || state.project.name;
+  const action = nextAction(state);
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Content</p>
-        <h1 className="mt-1 font-serif text-4xl">Posts</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          These are drafts. They are not approved until you say so on Review, and they are not published.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-5">
+      <PageHeader
+        kicker="Content"
+        title="Posts"
+        lede="Read the hook, caption, and call to action. Decisions happen on Review, and nothing here is posted."
+        actions={
+          action.href.endsWith("/review") ? (
+            <Link href={action.href} className={primaryButtonClass}>
+              Review drafts
+            </Link>
+          ) : null
+        }
+      />
+      {state.pipeline.state === "failed" ? (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+          <p className="text-sm font-semibold text-rose-950">A step failed before these drafts were finished. Retry it, then come back to these posts.</p>
+          <FailedJobs jobs={state.jobs} />
+          <div className="mt-3">
+            <NextActionButton action={nextAction(state)} projectId={id} onDone={() => void reload()} />
+          </div>
+        </section>
+      ) : null}
       {platforms.length > 1 ? (
         <div className="flex flex-wrap gap-2">
           {platforms.map((item) => (
@@ -42,7 +63,18 @@ export default function ContentPage({ params }: { params: Promise<{ id: string }
           ))}
         </div>
       ) : null}
-      <PostGrid assets={current.filter(match)} businessName={businessName} website={state.client.website} empty="No posts in this round yet." />
+      <PostGrid
+        assets={current.filter(match)}
+        businessName={businessName}
+        website={state.client.website}
+        empty={
+          state.pipeline.state === "failed"
+            ? "Next: retry the failed step. This page stays empty until a draft is written."
+            : state.pipeline.state === "queued" || state.pipeline.state === "running"
+              ? "Next: stay on Overview while the drafts are written. They will show up here. Waiting does not approve them."
+              : "Next: start a request on Overview. Nothing is posted from it."
+        }
+      />
       {earlier.some(match) ? (
         <section className="grid gap-3">
           <h2 className="font-serif text-2xl">Earlier rounds</h2>
@@ -65,9 +97,11 @@ function PostGrid({
   website: string;
   empty: string;
 }) {
-  if (assets.length === 0) return empty ? <p className="text-sm text-ink-soft">{empty}</p> : null;
+  if (assets.length === 0) {
+    return empty ? <EmptyState>{empty}</EmptyState> : null;
+  }
   return (
-    <div className="flex flex-wrap gap-5">
+    <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
       {assets.map((asset) => (
         <PostPreview key={asset.id} asset={asset} businessName={businessName} website={website} />
       ))}

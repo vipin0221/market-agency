@@ -1,62 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState } from "react";
-import { StatusPill } from "@/components/status-pill";
+import { use } from "react";
+import { PageHeader } from "@/components/page-header";
+import { Banner, LoadingLine, Section } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 
 export default function ConnectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error, reload } = useProjectState(id);
-  const [notice, setNotice] = useState<string | null>(null);
+  const { state, error } = useProjectState(id);
 
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state) return <p className="text-sm">Loading accounts…</p>;
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state) return <LoadingLine label="Loading accounts…" />;
 
   const connected = state.integrations.filter((item) => item.status === "CONNECTED").length;
 
-  async function connect(integrationId: string) {
-    const response = await fetch(`/api/integrations/${integrationId}/connect`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    const data = (await response.json()) as { message?: string };
-    setNotice(data.message || "This account was not connected.");
-    await reload();
-  }
-
   return (
-    <div className="mx-auto max-w-3xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Connect</p>
-      <h1 className="mt-1 font-serif text-4xl">Accounts</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-        {connected === 0
-          ? "None of these accounts are connected. Connect does not start a real sign-in, and it will not mark an account live or publish a post."
-          : `${connected} connected. Publishing is still off in this version.`}
-      </p>
-      {notice ? <p className="mt-4 rounded-xl border border-line bg-panel px-4 py-3 text-sm leading-6">{notice}</p> : null}
-      <ul className="mt-6 grid gap-3">
-        {state.integrations.map((integration) => (
-          <li key={integration.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-panel px-4 py-4">
-            <div>
-              <p className="font-medium">{integration.label}</p>
-              <p className="mt-1 text-xs text-ink-soft">{integration.status === "CONNECTED" ? "Connected" : "Not connected"}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <StatusPill value={integration.status} />
-              <button type="button" onClick={() => void connect(integration.id)} className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
-                Connect
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-6 text-xs text-ink-soft">
-        <Link href={`/projects/${id}/integrations`} className="font-semibold text-accent">
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Connect"
+        title="Accounts"
+        lede="Phase 1 does not sign in to an ad or social account, and it does not post."
+      />
+      <Section
+        title="Account sign-in is not in this version"
+        lede="When a real sign-in exists, it will be one flow for these accounts. Until then, publishing stays off and no status is flipped."
+        action={<span className="rounded-full bg-paper px-2 py-0.5 text-[11px] font-medium text-ink-soft ring-1 ring-inset ring-line">Phase 2</span>}
+        padded={false}
+      >
+        <p className="border-b border-line px-5 py-3 text-sm leading-6">
+          Status stays <span className="font-medium">NOT_CONNECTED</span>
+          {connected > 0 ? ` (${connected} marked connected in stored rows)` : ""}. There is no provider sign-in to start.
+        </p>
+        {state.integrations.length === 0 ? (
+          <p className="px-5 py-4 text-sm text-ink-soft">No accounts are on file for this brand yet.</p>
+        ) : (
+          <ul>
+            {state.integrations.map((integration) => (
+              <li key={integration.id} className="flex items-center justify-between gap-3 border-t border-line px-5 py-2.5 text-sm first:border-t-0">
+                <span className="min-w-0 break-words font-medium">{integration.label}</span>
+                <span className="shrink-0 text-xs text-ink-soft">Not connected</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+      <p className="text-sm leading-6 text-ink-soft">
+        <Link href={`/projects/${id}/calendar`} className="font-medium text-accent">
+          Store a publish time
+        </Link>
+        <span className="mx-2 text-line">·</span>
+        <Link href={`/projects/${id}/reports`} className="font-medium text-accent">
+          Record a result
+        </Link>
+        <span className="mx-2 text-line">·</span>
+        <Link href={`/projects/${id}/integrations`} className="font-medium text-accent">
           Integration records
-        </Link>{" "}
-        stay under Advanced for operators.
+        </Link>
       </p>
     </div>
   );

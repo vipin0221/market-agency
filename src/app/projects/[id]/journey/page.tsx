@@ -4,48 +4,62 @@ import Link from "next/link";
 import { use } from "react";
 import { ClientForm } from "@/components/client-form";
 import { ExcerptList } from "@/components/excerpt-list";
+import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
+import { NextActionButton } from "@/components/next-action-button";
+import { PageHeader } from "@/components/page-header";
+import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
-import { buildJourney, excerptsFor, focusStage, type StageId } from "@/lib/journey";
+import { buildJourney, excerptsFor, focusStage, nextAction, type StageId } from "@/lib/journey";
 
 const order: StageId[] = ["brand", "research", "strategy", "content", "review", "connect", "campaigns", "reports"];
 
 export default function JourneyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error } = useProjectState(id);
-  if (error) return <p className="text-sm text-rose-800">{error}</p>;
-  if (!state || !state.client) return <p className="text-sm">Loading this brand…</p>;
+  const { state, error, reload } = useProjectState(id);
+  if (error) return <Banner tone="error">{error}</Banner>;
+  if (!state || !state.client) return <LoadingLine label="Loading this brand…" />;
 
   const stages = buildJourney(state);
   const client = state.client;
+  const action = nextAction(state);
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Journey</p>
-        <h1 className="mt-1 font-serif text-4xl">{state.project.name}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          Brand through reports. Campaigns and reports come later, and a campaign is not required for organic posts.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Journey"
+        title={state.project.name}
+        lede="Brand through reports. Campaigns and reports come later, and a campaign is not required for organic posts."
+      />
       {state.workflow ? (
-        <section className="rounded-2xl border border-line bg-panel px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">You asked</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{state.workflow.requestText}</p>
+        <section className="rounded-xl border border-line bg-panel px-5 py-4">
+          <p className="text-xs font-medium text-ink-soft">You asked</p>
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{state.workflow.requestText}</p>
         </section>
       ) : (
-        <p className="text-sm text-ink-soft">No request yet. Start one from Overview.</p>
+        <EmptyState title="No request yet">Next: write one on Overview. Nothing is posted from it.</EmptyState>
       )}
+      {state.pipeline.state === "failed" || state.pipeline.stalled ? (
+        <section className="rounded-2xl border border-rose-200 bg-panel px-5 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
+          <h2 className="mt-2 text-lg font-semibold tracking-tight">{action.title}</h2>
+          <p className="mt-2 text-sm leading-6 text-ink-soft">{action.detail}</p>
+          <FailedJobs jobs={state.jobs} />
+          <div className="mt-4">
+            <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
+          </div>
+        </section>
+      ) : null}
       <JourneyStrip stages={stages} currentId={focusStage(stages)} />
       {order.map((stageId) => {
         const stage = stages.find((item) => item.id === stageId);
         if (!stage) return null;
         const external = !stage.href.includes("#");
         return (
-          <section key={stage.id} id={stage.id} className="scroll-mt-24 rounded-2xl border border-line bg-panel p-5 shadow-card">
+          <section key={stage.id} id={stage.id} className="min-w-0 scroll-mt-24 rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-serif text-3xl">{stage.label}</h2>
+              <h2 className="break-words font-serif text-2xl sm:text-3xl">{stage.label}</h2>
               <HumanStatusPill status={stage.status} />
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">{stage.summary}</p>
@@ -77,7 +91,7 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
                   ).map(([label, value]) => (
                     <div key={label}>
                       <dt className="text-xs uppercase tracking-wide text-ink-soft">{label}</dt>
-                      <dd>{value.trim() || "UNKNOWN"}</dd>
+                      <dd className="break-words">{value.trim() || "Not on file"}</dd>
                     </div>
                   ))}
                 </dl>

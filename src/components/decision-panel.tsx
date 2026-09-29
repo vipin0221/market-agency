@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Banner, fieldClass, secondaryButtonClass } from "@/components/ui";
 
 export function DecisionPanel({
   approvalId,
@@ -17,11 +18,13 @@ export function DecisionPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [next, setNext] = useState<string | null>(null);
 
   async function send(decision: "APPROVE" | "REVISION" | "HOLD") {
     setPending(true);
     setMessage(null);
     setError(null);
+    setNext(null);
     const response = await fetch(`/api/approvals/${approvalId}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -31,6 +34,13 @@ export function DecisionPanel({
     if (!response.ok) setError(data.message || "The decision was not recorded.");
     else {
       setMessage(data.message || "Recorded.");
+      setNext(
+        decision === "APPROVE"
+          ? "Next: open Connect. Accounts stay NOT_CONNECTED, and nothing is posted."
+          : decision === "REVISION"
+            ? "Next: revised drafts come back to Review. Waiting does not approve them."
+            : "Next: this round stays on hold until you approve, revise, or start another request.",
+      );
       setNote("");
       onDone();
     }
@@ -38,9 +48,9 @@ export function DecisionPanel({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
+    <div className="rounded-2xl border border-line bg-panel p-5 shadow-card">
       <h3 className="font-serif text-2xl">{title}</h3>
-      <p className="mt-1 text-sm text-ink-soft">{lede}</p>
+      <p className="mt-1 text-sm leading-6 text-ink-soft">{lede}</p>
       <label className="mt-4 block text-sm">
         <span className="mb-1 block font-medium">Note</span>
         <textarea
@@ -48,22 +58,35 @@ export function DecisionPanel({
           onChange={(event) => setNote(event.target.value)}
           rows={3}
           placeholder="Required for a revision. Optional for approve or hold."
-          className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+          className={fieldClass}
         />
       </label>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" disabled={pending} onClick={() => send("APPROVE")} className="rounded-md bg-pine px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => send("APPROVE")} className="inline-flex items-center justify-center rounded-lg bg-pine px-4 py-2.5 text-sm font-semibold text-white hover:bg-pine/90 disabled:opacity-50">
           Approve
         </button>
-        <button type="button" disabled={pending} onClick={() => send("REVISION")} className="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => send("REVISION")} className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50">
           Request revision
         </button>
-        <button type="button" disabled={pending} onClick={() => send("HOLD")} className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => send("HOLD")} className={secondaryButtonClass}>
           Hold
         </button>
       </div>
-      {message ? <p className="mt-3 text-sm text-pine">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-rose-800">{error}</p> : null}
+      {message ? (
+        <div className="mt-4">
+          <Banner tone="success" role="status">
+            {message}
+            {next ? ` ${next}` : ""}
+          </Banner>
+        </div>
+      ) : null}
+      {error ? (
+        <div className="mt-4">
+          <Banner tone="error" role="alert">
+            {error}
+          </Banner>
+        </div>
+      ) : null}
     </div>
   );
 }

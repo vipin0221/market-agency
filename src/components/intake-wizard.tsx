@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CHANNELS } from "@/lib/catalog";
+import { AppTopBar, Banner, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 
 type Values = {
   projectName: string;
@@ -43,7 +44,7 @@ const steps = [
   { title: "Brand", lede: "Who this work is for." },
   { title: "Offer & audience", lede: "What you sell, and who it is for. Blank fields stay unknown." },
   { title: "Goal & ask", lede: "What you want this round to do." },
-  { title: "Channels & limits", lede: "Pick at least one channel. Budget and limits can wait." },
+  { title: "Channels & limits", lede: "Pick at least one channel. Creating the brand queues the pipeline. Overview shows each step. Nothing is posted." },
 ];
 
 export function IntakeWizard() {
@@ -81,25 +82,36 @@ export function IntakeWizard() {
     }
     setPending(true);
     setError(null);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 20000);
     const channelText = CHANNELS.filter((channel) => channels.includes(channel.id))
       .map((channel) => channel.label)
       .join(", ");
-    const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ...values,
-        projectName: values.projectName.trim() || values.businessName.trim(),
-        channels: channelText,
-      }),
-    });
-    const data = (await response.json()) as { message?: string; projectId?: string };
-    if (!response.ok || !data.projectId) {
-      setError(data.message || "The brand was not started.");
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          ...values,
+          projectName: values.projectName.trim() || values.businessName.trim(),
+          channels: channelText,
+        }),
+      });
+      const data = (await response.json()) as { message?: string; projectId?: string };
+      if (!response.ok || !data.projectId) {
+        setError(data.message || "The brand was not created. Try again.");
+        setPending(false);
+        return;
+      }
+      router.push(`/projects/${data.projectId}`);
+    } catch (caught) {
+      const aborted = caught instanceof DOMException && caught.name === "AbortError";
+      setError(aborted ? "Creating the brand timed out. Try again." : "The brand was not created. Try again.");
       setPending(false);
-      return;
+    } finally {
+      window.clearTimeout(timer);
     }
-    router.push(`/projects/${data.projectId}`);
   }
 
   function onSubmit(event: React.FormEvent) {
@@ -120,17 +132,21 @@ export function IntakeWizard() {
   const current = steps[step];
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <div className="flex items-center justify-between gap-3">
-        <Link href="/" className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-          Agency OS
-        </Link>
-        <Link href="/" className="text-sm text-ink-soft">
+    <main className="mx-auto min-w-0 max-w-2xl overflow-x-clip px-4 py-8 sm:px-6">
+      <AppTopBar>
+        <Link href="/" className="font-semibold">
           Brands
         </Link>
-      </div>
-      <h1 className="mt-6 font-serif text-4xl">Add a brand</h1>
-      <p className="mt-2 text-sm leading-6 text-ink-soft">Business name, the ask, and one channel are required. Everything else can wait.</p>
+      </AppTopBar>
+      <header className="mt-6 border-b border-line pb-5">
+      <p className="text-xs font-medium text-ink-soft">
+        Step {step + 1} of {steps.length}
+      </p>
+      <h1 className="mt-1 break-words text-2xl font-semibold tracking-tight">Add a brand</h1>
+      <p className="mt-2 text-sm leading-6 text-ink-soft">
+        Business name, the ask, and one channel are required. Everything else can wait. Next, after you start, is the brand overview. Drafts are not posted.
+      </p>
+      </header>
       <ol className="mt-6 flex flex-wrap gap-2">
         {steps.map((item, index) => {
           const active = index === step;
@@ -190,6 +206,7 @@ export function IntakeWizard() {
           ) : null}
           {step === 3 ? (
             <>
+              <Banner tone="info">Starting writes drafts only. Review comes before any approval. Nothing is posted.</Banner>
               <fieldset>
                 <legend className="text-sm font-medium">Channels *</legend>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -218,11 +235,13 @@ export function IntakeWizard() {
           ) : null}
         </div>
         {error ? (
-          <p role="alert" className="mt-4 text-sm text-rose-800">
-            {error}
-          </p>
+          <div className="mt-4">
+            <Banner tone="error" role="alert">
+              {error}
+            </Banner>
+          </div>
         ) : null}
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-3">
           {step > 0 ? (
             <button
               type="button"
@@ -230,17 +249,17 @@ export function IntakeWizard() {
                 setError(null);
                 setStep(step - 1);
               }}
-              className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold"
+              className={secondaryButtonClass}
             >
               Back
             </button>
           ) : (
-            <Link href="/" className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold">
-              Back
+            <Link href="/" className={secondaryButtonClass}>
+              Brands
             </Link>
           )}
-          <button type="submit" disabled={pending} className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50">
-            {pending ? "Starting…" : step === steps.length - 1 ? "Start this brand" : "Continue"}
+          <button type="submit" disabled={pending} className={primaryButtonClass}>
+            {pending ? "Creating the brand…" : step === steps.length - 1 ? "Create brand" : "Continue"}
           </button>
         </div>
       </form>
@@ -277,7 +296,7 @@ function Field({
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+        className={fieldClass}
       />
       {hint ? <span className="mt-1 block text-xs text-ink-soft">{hint}</span> : null}
     </label>
@@ -314,7 +333,7 @@ function Area({
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent"
+        className={fieldClass}
       />
     </label>
   );
