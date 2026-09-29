@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { use, useState } from "react";
 import { FailedJobs } from "@/components/failed-jobs";
 import { NextActionButton } from "@/components/next-action-button";
-import { NextStepBar, onThisPage } from "@/components/next-step";
 import { PageHeader } from "@/components/page-header";
 import { PostPreview } from "@/components/post-preview";
 import { Banner, EmptyState, LoadingLine } from "@/components/ui";
@@ -30,9 +30,17 @@ export default function ContentPage({ params }: { params: Promise<{ id: string }
       <PageHeader
         kicker="Content"
         title="Posts"
-        lede="These are drafts. Next is Review when you are ready. They are not approved until you say so, and they are not posted."
+        lede="Read the hook, caption, and call to action. A decision is made per draft on Review, and nothing here is posted."
       />
-      <NextStepBar action={action} projectId={id} active={onThisPage(action, id, "content")} onDone={() => void reload()} />
+      {action.href.endsWith("/review") ? (
+        <p className="text-sm leading-6 text-ink-soft">
+          Next:{" "}
+          <Link href={action.href} className="font-semibold text-accent">
+            decide each draft on Review
+          </Link>
+          . This page is the reading view.
+        </p>
+      ) : null}
       {state.pipeline.state === "failed" ? (
         <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
           <p className="text-sm font-semibold text-rose-950">A step failed before these drafts were finished. Retry it, then come back to these posts.</p>

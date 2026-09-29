@@ -8,7 +8,6 @@ import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
 import { NextActionButton } from "@/components/next-action-button";
-import { NextStepBar, onThisPage } from "@/components/next-step";
 import { PageHeader } from "@/components/page-header";
 import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
@@ -40,9 +39,6 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
         </section>
       ) : (
         <EmptyState title="No request yet">Next: write one on Overview. Nothing is posted from it.</EmptyState>
-      )}
-      {state.pipeline.state === "failed" || state.pipeline.stalled ? null : (
-        <NextStepBar action={action} projectId={id} active={onThisPage(action, id, "journey")} onDone={() => void reload()} />
       )}
       {state.pipeline.state === "failed" || state.pipeline.stalled ? (
         <section className="rounded-2xl border border-rose-200 bg-panel px-5 py-5">
@@ -95,7 +91,7 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
                   ).map(([label, value]) => (
                     <div key={label}>
                       <dt className="text-xs uppercase tracking-wide text-ink-soft">{label}</dt>
-                      <dd>{value.trim() || "UNKNOWN"}</dd>
+                      <dd className="break-words">{value.trim() || "Not on file"}</dd>
                     </div>
                   ))}
                 </dl>

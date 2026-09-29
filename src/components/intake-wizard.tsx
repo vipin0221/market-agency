@@ -44,7 +44,7 @@ const steps = [
   { title: "Brand", lede: "Who this work is for." },
   { title: "Offer & audience", lede: "What you sell, and who it is for. Blank fields stay unknown." },
   { title: "Goal & ask", lede: "What you want this round to do." },
-  { title: "Channels & limits", lede: "Pick at least one channel. Budget and limits can wait." },
+  { title: "Channels & limits", lede: "Pick at least one channel. Creating the brand queues the pipeline. Overview shows each step. Nothing is posted." },
 ];
 
 export function IntakeWizard() {
@@ -82,25 +82,36 @@ export function IntakeWizard() {
     }
     setPending(true);
     setError(null);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 20000);
     const channelText = CHANNELS.filter((channel) => channels.includes(channel.id))
       .map((channel) => channel.label)
       .join(", ");
-    const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ...values,
-        projectName: values.projectName.trim() || values.businessName.trim(),
-        channels: channelText,
-      }),
-    });
-    const data = (await response.json()) as { message?: string; projectId?: string };
-    if (!response.ok || !data.projectId) {
-      setError(data.message || "The brand was not started.");
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          ...values,
+          projectName: values.projectName.trim() || values.businessName.trim(),
+          channels: channelText,
+        }),
+      });
+      const data = (await response.json()) as { message?: string; projectId?: string };
+      if (!response.ok || !data.projectId) {
+        setError(data.message || "The brand was not created. Try again.");
+        setPending(false);
+        return;
+      }
+      router.push(`/projects/${data.projectId}`);
+    } catch (caught) {
+      const aborted = caught instanceof DOMException && caught.name === "AbortError";
+      setError(aborted ? "Creating the brand timed out. Try again." : "The brand was not created. Try again.");
       setPending(false);
-      return;
+    } finally {
+      window.clearTimeout(timer);
     }
-    router.push(`/projects/${data.projectId}`);
   }
 
   function onSubmit(event: React.FormEvent) {
@@ -246,7 +257,7 @@ export function IntakeWizard() {
             </Link>
           )}
           <button type="submit" disabled={pending} className={primaryButtonClass}>
-            {pending ? "Starting…" : step === steps.length - 1 ? "Start this brand" : "Continue"}
+            {pending ? "Creating the brand…" : step === steps.length - 1 ? "Create brand" : "Continue"}
           </button>
         </div>
       </form>

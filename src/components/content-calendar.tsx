@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Banner, fieldClass, primaryButtonClass } from "@/components/ui";
 import { readSchedule } from "@/lib/schedule";
 import type { ProjectState } from "@/lib/state";
 
 type Asset = ProjectState["contentAssets"][number];
 
-export function ContentCalendar({ projectId, assets }: { projectId: string; assets: Asset[] }) {
+export function ContentCalendar({ projectId, assets, onScheduled }: { projectId: string; assets: Asset[]; onScheduled?: () => void }) {
   const [mode, setMode] = useState<"week" | "month">("week");
   const [cursor, setCursor] = useState(() => startOfWeek(new Date()));
 
@@ -95,26 +96,77 @@ export function ContentCalendar({ projectId, assets }: { projectId: string; asse
         })}
       </div>
       </div>
-      <section className="rounded-2xl border border-dashed border-line bg-panel px-4 py-4">
-        <h2 className="font-serif text-2xl">Planned, not scheduled</h2>
+      <section id="unscheduled" className="scroll-mt-24 rounded-2xl border border-line bg-panel px-4 py-4">
+        <h2 className="font-serif text-2xl">Unscheduled</h2>
         <p className="mt-1 text-sm leading-6 text-ink-soft">
-          {placed.dated.length === 0
-            ? "No publish time is stored on these posts, so they are not placed on a day."
-            : "Posts without a stored publish time stay in this list."}
+          Set a date and time to place a draft on the calendar. This stores the time only. Nothing is posted.
         </p>
-        {placed.unscheduled.length === 0 ? <p className="mt-3 text-sm text-ink-soft">Nothing is waiting without a time.</p> : null}
-        <ul className="mt-3 grid gap-2">
+        {placed.unscheduled.length === 0 ? <p className="mt-3 text-sm text-ink-soft">Every draft on this brand already has a stored time.</p> : null}
+        <ul className="mt-3 grid gap-3">
           {placed.unscheduled.map((asset) => (
-            <li key={asset.id} className="rounded-xl border border-line px-3 py-3 text-sm">
-              <Link href={`/projects/${projectId}/content#post-${asset.id}`} className="font-medium hover:text-accent">
-                {asset.platform} · {asset.hook}
-              </Link>
-              <p className="mt-1 text-xs text-ink-soft">Drafted {new Date(asset.createdAt).toLocaleDateString()}. Not a publish time.</p>
-            </li>
+            <ScheduleRow key={asset.id} projectId={projectId} asset={asset} onScheduled={onScheduled} />
           ))}
         </ul>
       </section>
     </div>
+  );
+}
+
+function ScheduleRow({ projectId, asset, onScheduled }: { projectId: string; asset: Asset; onScheduled?: () => void }) {
+  const [at, setAt] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setPending(true);
+    setMessage(null);
+    setError(null);
+    const response = await fetch(`/api/projects/${projectId}/assets/${asset.id}/schedule`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ at }),
+    });
+    const data = (await response.json()) as { message?: string };
+    if (!response.ok) setError(data.message || "The time was not stored.");
+    else {
+      setMessage(data.message || "Publish time stored.");
+      setAt("");
+      onScheduled?.();
+    }
+    setPending(false);
+  }
+
+  return (
+    <li className="rounded-xl border border-line px-3 py-3">
+      <Link href={`/projects/${projectId}/content#post-${asset.id}`} className="break-words text-sm font-medium hover:text-accent">
+        {asset.platform} · {asset.hook}
+      </Link>
+      <form onSubmit={save} className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="block min-w-0 flex-1 text-sm">
+          <span className="mb-1.5 block font-medium">Publish time</span>
+          <input required type="datetime-local" value={at} onChange={(event) => setAt(event.target.value)} className={fieldClass} />
+        </label>
+        <button type="submit" disabled={pending} className={primaryButtonClass}>
+          {pending ? "Saving…" : "Save publish time"}
+        </button>
+      </form>
+      {message ? (
+        <div className="mt-3">
+          <Banner tone="success" role="status">
+            {message}
+          </Banner>
+        </div>
+      ) : null}
+      {error ? (
+        <div className="mt-3">
+          <Banner tone="error" role="alert">
+            {error}
+          </Banner>
+        </div>
+      ) : null}
+    </li>
   );
 }
 

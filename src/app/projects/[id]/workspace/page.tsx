@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { DecisionPanel } from "@/components/decision-panel";
+import Link from "next/link";
 import { OperatorNotice } from "@/components/operator-notice";
 import { DeskBrief } from "@/components/desk-brief";
 import { OutcomeBanner } from "@/components/outcome-banner";
@@ -97,7 +97,15 @@ export default function WorkspacePage({ params }: { params: Promise<{ id: string
             </section>
             <div className="grid gap-4">
               <DeskBrief outputs={state.outputs.filter((output) => output.workflowId === state.workflow?.id)} />
-              {state.approval.pendingId ? <DecisionPanel approvalId={state.approval.pendingId} onDone={() => void reload()} /> : null}
+              {state.approval.pendingId ? (
+                <p className="rounded-xl border border-line bg-panel px-4 py-3 text-sm leading-6">
+                  Decisions are per draft on{" "}
+                  <Link href={`/projects/${id}/review`} className="font-semibold text-accent">
+                    Review
+                  </Link>
+                  . This workspace does not approve every draft at once.
+                </p>
+              ) : null}
               <section className="grid gap-4">
                 <h2 className="font-serif text-2xl">Content for review</h2>
                 {assets.length === 0 ? <p className="text-sm text-ink-soft">Posts appear here after Content Studio writes them.</p> : null}

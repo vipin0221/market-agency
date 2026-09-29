@@ -103,7 +103,7 @@ export function describePipeline(input: {
       Date.now() - new Date(latest.updatedAt).getTime() > STALL_MS;
     return {
       state: running ? "running" : "queued",
-      label: running ? "Running" : "Queued",
+      label: running ? "In progress" : "Queued",
       detail: running
         ? `${name} is running. This page updates on its own. If the step fails, the error stays on screen.`
         : stalled
@@ -120,7 +120,7 @@ export function describePipeline(input: {
 
   return {
     state: "done",
-    label: "Done",
+    label: "Complete",
     detail:
       input.workflow.outcome === "ACTIVATION_BLOCKED"
         ? "The round finished. Accounts stay NOT_CONNECTED, and nothing was posted."

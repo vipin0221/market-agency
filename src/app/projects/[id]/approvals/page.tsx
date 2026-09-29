@@ -2,17 +2,16 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { DecisionPanel } from "@/components/decision-panel";
 import { OperatorNotice } from "@/components/operator-notice";
+import { PostDecisionLog } from "@/components/post-decision";
 import { PageHeader } from "@/components/page-header";
-import { PostCard } from "@/components/post-card";
 import { StatusPill } from "@/components/status-pill";
 import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 
 export default function ApprovalsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error, reload } = useProjectState(id);
+  const { state, error } = useProjectState(id);
   if (error) return <Banner tone="error">{error}</Banner>;
   if (!state) return <LoadingLine label="Loading approvals…" />;
 
@@ -32,21 +31,36 @@ export default function ApprovalsPage({ params }: { params: Promise<{ id: string
       </OperatorNotice>
       <PageHeader kicker="Approval log" title="Human decisions" lede="Approve, request a revision, or hold. Silence is not approval, and nothing is posted." />
       {pending ? (
-        <>
-          <DecisionPanel approvalId={pending.id} onDone={() => void reload()} />
-          <div className="grid gap-4">
-            {reviewAssets.map((asset) => (
-              <PostCard key={asset.id} asset={asset} />
-            ))}
-          </div>
-        </>
+        <p className="text-sm leading-6">
+          {reviewAssets.length} draft{reviewAssets.length === 1 ? "" : "s"} still waiting. Decide each one on{" "}
+          <Link href={`/projects/${id}/review`} className="font-semibold text-accent">
+            Review
+          </Link>
+          .
+        </p>
       ) : (
         <EmptyState title="Nothing is waiting">
           No approval is pending. Next: open Review when drafts are ready. Silence is not approval.
         </EmptyState>
       )}
       <section>
-        <h2 className="font-serif text-2xl">Decision log</h2>
+        <h2 className="font-serif text-2xl">Per draft</h2>
+        <ul className="mt-3 grid gap-2">
+          {state.contentAssets.length === 0 ? <li className="text-sm text-ink-soft">No drafts yet.</li> : null}
+          {state.contentAssets.map((asset) => (
+            <li key={asset.id} className="rounded-xl border border-line bg-panel px-4 py-3">
+              <p className="break-words text-sm font-medium">
+                {asset.platform} · {asset.hook}
+              </p>
+              <div className="mt-1">
+                <PostDecisionLog asset={asset} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl">Round log</h2>
         <ul className="mt-3 grid gap-2">
           {state.approvals.length === 0 ? <li className="text-sm text-ink-soft">No decisions recorded.</li> : null}
           {state.approvals.map((item) => (

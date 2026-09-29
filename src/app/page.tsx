@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { HumanStatusPill } from "@/components/human-status";
-import { PasswordNotice } from "@/components/password-notice";
 import { SignOutButton } from "@/components/sign-out-button";
 import { AppTopBar, EmptyState, primaryButtonClass } from "@/components/ui";
 import { requirePageOperator } from "@/lib/auth";
@@ -17,8 +15,6 @@ export default async function HomePage() {
     include: { client: true, workflows: { orderBy: { createdAt: "desc" }, take: 1 } },
   });
 
-  if (projects.length === 1) redirect(`/projects/${projects[0].id}`);
-
   return (
     <main className="mx-auto min-w-0 max-w-5xl overflow-x-clip px-4 py-8 sm:px-6 sm:py-10">
       <AppTopBar email={session.operator.email}>
@@ -27,9 +23,6 @@ export default async function HomePage() {
         </Link>
         <SignOutButton className="font-semibold" />
       </AppTopBar>
-      <div className="mt-5">
-        <PasswordNotice mustChange={session.operator.mustChangePassword} />
-      </div>
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="break-words font-serif text-3xl leading-tight sm:text-4xl">Your brands</h1>
@@ -59,7 +52,7 @@ export default async function HomePage() {
           {projects.map((project) => {
             const workflow = project.workflows[0];
             const tone = workflowLabel(workflow?.status ?? "", workflow?.outcome ?? "");
-            const channels = project.client?.channels.trim() || "UNKNOWN";
+            const channels = project.client?.channels.trim() || "No channel on file";
             return (
               <li key={project.id} className="min-w-0">
                 <Link href={`/projects/${project.id}`} className="block h-full min-w-0 rounded-2xl border border-line bg-panel p-5 shadow-card hover:border-ink/30">

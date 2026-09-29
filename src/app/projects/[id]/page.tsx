@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { use } from "react";
+import { BriefChecklist } from "@/components/brief-checklist";
 import { FailedJobs } from "@/components/failed-jobs";
+import { JobProgress } from "@/components/job-progress";
 import { Banner, EmptyState, LoadingLine } from "@/components/ui";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
@@ -54,6 +56,8 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
           ) : null}
         </div>
       </section>
+      <JobProgress jobs={state.jobs} pipeline={state.pipeline} />
+      <BriefChecklist projectId={id} client={state.client} />
       <JourneyStrip stages={stages} currentId={focusStage(stages)} />
       <section>
         <div className="flex items-baseline justify-between gap-3">

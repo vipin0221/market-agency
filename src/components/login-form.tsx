@@ -15,23 +15,33 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
     event.preventDefault();
     setPending(true);
     setError(null);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 12000);
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
       const data = (await response.json().catch(() => null)) as { message?: string } | null;
       if (!response.ok) {
-        setError(data?.message || "Sign-in did not succeed.");
+        setError(data?.message || "That email or password was not accepted. Try again.");
         setPending(false);
         return;
       }
       router.replace(nextPath);
       router.refresh();
-    } catch {
-      setError("Sign-in did not succeed.");
+      window.setTimeout(() => {
+        setPending(false);
+        setError("Sign-in did not finish. Try again.");
+      }, 8000);
+    } catch (caught) {
+      const aborted = caught instanceof DOMException && caught.name === "AbortError";
+      setError(aborted ? "Sign-in timed out. Check the password and try again." : "Sign-in did not succeed. Try again.");
       setPending(false);
+    } finally {
+      window.clearTimeout(timer);
     }
   }
 

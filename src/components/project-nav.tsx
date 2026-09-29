@@ -31,6 +31,7 @@ export function ProjectNav({
   businessName,
   projects,
   operatorEmail,
+  mustChangePassword,
   children,
 }: {
   projectId: string;
@@ -38,6 +39,7 @@ export function ProjectNav({
   businessName: string;
   projects: { id: string; name: string }[];
   operatorEmail: string;
+  mustChangePassword: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -72,11 +74,12 @@ export function ProjectNav({
     advancedOpen,
     setAdvancedOpen,
     onNavigate: () => setDrawer(false),
+    mustChangePassword,
   };
 
   return (
     <div className="flex min-h-dvh w-full bg-paper">
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col overflow-y-auto bg-ink text-paper lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 bg-ink text-paper lg:flex">
         <Sidebar {...navProps} />
       </aside>
       {drawer ? (
@@ -87,7 +90,7 @@ export function ProjectNav({
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="relative flex h-full w-[min(18rem,88vw)] flex-col overflow-y-auto bg-ink text-paper shadow-2xl"
+            className="relative flex h-full w-[min(18rem,88vw)] flex-col bg-ink text-paper shadow-2xl"
           >
             <div className="flex justify-end px-3 pt-3">
               <button type="button" onClick={() => setDrawer(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-paper/80 hover:bg-white/10">
@@ -133,6 +136,7 @@ function Sidebar({
   advancedOpen,
   setAdvancedOpen,
   onNavigate,
+  mustChangePassword,
 }: {
   projectId: string;
   projectName: string;
@@ -143,6 +147,7 @@ function Sidebar({
   advancedOpen: boolean;
   setAdvancedOpen: (open: boolean) => void;
   onNavigate: () => void;
+  mustChangePassword: boolean;
 }) {
   const base = `/projects/${projectId}`;
   const onAdvanced = advanced.some(([, href]) => {
@@ -155,15 +160,15 @@ function Sidebar({
   }, [onAdvanced, setAdvancedOpen]);
 
   return (
-    <>
-      <div className="border-b border-white/10 px-4 py-5">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-white/10 px-4 py-5">
         <Link href="/" onClick={onNavigate} className="text-[11px] font-semibold uppercase tracking-[0.16em] text-paper/60">
           Agency OS
         </Link>
         <p className="mt-2 break-words font-serif text-2xl leading-tight">{projectName}</p>
         {businessName && businessName !== projectName ? <p className="mt-1 break-words text-sm text-paper/70">{businessName}</p> : null}
       </div>
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4">
         {primary.map(([label, href]) => (
           <NavLink key={label} href={`${base}${href}`} pathname={pathname} exact={href === ""} onNavigate={onNavigate}>
             {label}
@@ -187,37 +192,38 @@ function Sidebar({
           </div>
         </details>
       </nav>
-      <div className="border-t border-white/10 px-3 py-3">
-        {projects.length > 1 ? <p className="px-2 text-[11px] uppercase tracking-wide text-paper/50">Brands</p> : null}
-        {projects.length > 1
-          ? projects.map((item) => (
-              <Link
-                key={item.id}
-                href={`/projects/${item.id}`}
-                onClick={onNavigate}
-                className={`block truncate rounded-lg px-2 py-1.5 text-sm hover:bg-white/10 ${item.id === projectId ? "bg-white/10" : "text-paper/80"}`}
-              >
-                {item.name}
-              </Link>
-            ))
-          : null}
-        {projects.length > 1 ? (
-          <Link href="/" onClick={onNavigate} className="mt-1 block rounded-lg px-2 py-1.5 text-sm text-paper/70 hover:bg-white/10">
-            All brands
+      <div className="shrink-0 border-t border-white/10 px-3 py-3">
+        <p className="px-2 text-[11px] uppercase tracking-wide text-paper/50">Brands</p>
+        {projects.map((item) => (
+          <Link
+            key={item.id}
+            href={`/projects/${item.id}`}
+            onClick={onNavigate}
+            className={`block truncate rounded-lg px-2 py-1.5 text-sm hover:bg-white/10 ${item.id === projectId ? "bg-white/10" : "text-paper/80"}`}
+          >
+            {item.name}
           </Link>
-        ) : null}
+        ))}
+        <Link href="/" onClick={onNavigate} className="mt-1 block rounded-lg px-2 py-1.5 text-sm text-paper/80 hover:bg-white/10">
+          All brands
+        </Link>
         <Link href="/new" onClick={onNavigate} className="mt-1 block rounded-lg border border-white/15 px-3 py-2 text-center text-sm hover:bg-white/10">
           New brand
         </Link>
-        <p className="mt-3 truncate px-2 text-[11px] text-paper/50">{operatorEmail}</p>
-        <div className="mt-1 flex items-center gap-3 px-2 pb-1">
+        <p className="mt-3 break-all px-2 text-[11px] leading-4 text-paper/50">{operatorEmail}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pb-1">
           <Link href="/account" onClick={onNavigate} className="text-sm text-paper/80 hover:text-paper">
             Account
           </Link>
           <SignOutButton className="text-sm text-paper/80 hover:text-paper" />
         </div>
+        {mustChangePassword ? (
+          <Link href="/account" onClick={onNavigate} className="mt-2 block px-2 text-xs leading-5 text-paper/70 underline">
+            Change the default password
+          </Link>
+        ) : null}
       </div>
-    </>
+    </div>
   );
 }
 

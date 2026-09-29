@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { use, useState } from "react";
-import { NextStepBar, onThisPage } from "@/components/next-step";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { Banner, EmptyState, LoadingLine, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
-import { nextAction } from "@/lib/journey";
 
 export default function CampaignsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -61,8 +59,6 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
     await reload();
   }
 
-  const action = nextAction(state);
-
   return (
     <div className="grid min-w-0 gap-6">
       <PageHeader
@@ -70,7 +66,6 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
         title="Optional plans"
         lede="Optional. Organic posts do not need a campaign. Plans here are not activated, and this version does not post them."
       />
-      <NextStepBar action={action} projectId={id} active={onThisPage(action, id, "campaigns")} onDone={() => void reload()} />
       {state.campaigns.length === 0 ? (
         <EmptyState
           title="No plan yet"
@@ -89,8 +84,8 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
             <h2 className="font-serif text-3xl">{campaign.name}</h2>
             <StatusPill value={campaign.status} />
           </div>
-          <p className="mt-2 text-sm">Objective: {campaign.objective || "UNKNOWN"}</p>
-          <p className="mt-1 text-sm">Channels: {campaign.channels || "UNKNOWN"}</p>
+          <p className="mt-2 break-words text-sm">Objective: {campaign.objective || "Not on file"}</p>
+          <p className="mt-1 break-words text-sm">Channels: {campaign.channels || "Not on file"}</p>
           <p className="mt-3 text-sm text-ink-soft">
             Content objects on this campaign: {state.contentAssets.filter((asset) => asset.campaignId === campaign.id).length}
           </p>

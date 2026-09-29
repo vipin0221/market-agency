@@ -3,11 +3,11 @@ import type { ProjectState } from "./state";
 export type HumanStatus = "done" | "working" | "waiting" | "blocked" | "later" | "optional";
 
 export const HUMAN_LABEL: Record<HumanStatus, string> = {
-  done: "Done",
-  working: "Working",
-  waiting: "Waiting on you",
+  done: "Complete",
+  working: "In progress",
+  waiting: "Waiting",
   blocked: "Blocked",
-  later: "Up next",
+  later: "Skipped",
   optional: "Optional",
 };
 
@@ -53,13 +53,13 @@ export function workflowLabel(status: string, outcome: string): { status: HumanS
 }
 
 export function assetStatus(status: string): { status: HumanStatus; label: string } {
-  if (status === "APPROVED") return { status: "done", label: "Done" };
-  if (status === "READY_FOR_HUMAN_REVIEW" || status === "PENDING") return { status: "waiting", label: "Waiting on you" };
+  if (status === "APPROVED") return { status: "done", label: "Complete" };
+  if (status === "READY_FOR_HUMAN_REVIEW" || status === "PENDING") return { status: "waiting", label: "Waiting" };
   if (status === "HOLD") return { status: "waiting", label: "On hold" };
   if (status === "REVISION_REQUESTED") return { status: "waiting", label: "Revision asked" };
   if (status === "FAILED" || status === "BLOCKED") return { status: "blocked", label: "Blocked" };
-  if (status === "RUNNING" || status === "QUEUED") return { status: "working", label: "Working" };
-  return { status: "later", label: "Planned" };
+  if (status === "RUNNING" || status === "QUEUED") return { status: "working", label: "In progress" };
+  return { status: "later", label: "Skipped" };
 }
 
 export function decisionLabel(status: string) {
@@ -138,6 +138,7 @@ export function buildJourney(state: ProjectState): JourneyStage[] {
       id: "campaigns",
       label: "Campaigns",
       status: campaignStatus(state, architect),
+      statusLabel: campaignStatusLabel(state),
       summary: campaignSummary(state, architect),
       href: link("/campaigns"),
       optional: true,
@@ -197,11 +198,18 @@ export function nextAction(state: ProjectState): NextAction {
     };
   }
   if (pipe.state === "needs_human" || workflow.status === "AWAITING_APPROVAL" || state.approval.status === "AWAITING_APPROVAL") {
+    const waiting = state.contentAssets.filter((asset) => asset.workflowId === workflow.id && asset.status === "READY_FOR_HUMAN_REVIEW").length;
+    const decided = state.contentAssets.filter(
+      (asset) => asset.workflowId === workflow.id && ["APPROVED", "HOLD", "REVISION_REQUESTED"].includes(asset.status),
+    ).length;
     return {
-      title: "Review the drafts",
-      detail: "Approve, ask for a revision, or hold. Leaving the page does not approve them. Nothing is posted.",
+      title: decided > 0 ? "Decide the remaining drafts" : "Review each draft",
+      detail:
+        waiting > 0
+          ? `${waiting} draft${waiting === 1 ? "" : "s"} still need a decision of their own. Approve, revise, or hold applies to the draft you select. Silence is not approval.`
+          : "Approve, ask for a revision, or hold each draft. Leaving the page does not approve them. Nothing is posted.",
       href: link("/review"),
-      cta: "Review drafts",
+      cta: "Open review",
       status: "waiting",
     };
   }
@@ -321,21 +329,27 @@ function connectStatus(agentStatus: string, connected: number): HumanStatus {
 
 function connectStatusLabel(agentStatus: string, connected: number) {
   if (connected > 0) return undefined;
-  if (agentStatus === "FAILED" || agentStatus === "CONFLICT") return undefined;
-  if (connectStatus(agentStatus, connected) === "blocked") return "Not connected";
-  return undefined;
+  if (agentStatus === "RUNNING" || agentStatus === "QUEUED") return undefined;
+  return "Not connected";
 }
 
 function campaignStatus(state: ProjectState, architect: Agent | undefined): HumanStatus {
   const status = architect?.status ?? "SKIPPED";
   if (status === "RUNNING" || status === "QUEUED") return "working";
-  if (status === "BLOCKED" || status === "FAILED" || status === "CONFLICT") return "blocked";
-  if (state.campaigns.length > 0 || status === "COMPLETED") return "done";
+  if (status === "FAILED" || status === "CONFLICT") return "blocked";
+  const live = state.campaigns.some((campaign) => campaign.status === "ACTIVATED" || campaign.status === "LIVE");
+  if (live) return "done";
   return "optional";
 }
 
+function campaignStatusLabel(state: ProjectState) {
+  if (state.campaigns.length === 0) return undefined;
+  const live = state.campaigns.some((campaign) => campaign.status === "ACTIVATED" || campaign.status === "LIVE");
+  return live ? undefined : "Not activated";
+}
+
 function reportsStatus(agentStatus: string, metricCount: number): HumanStatus {
-  if (metricCount === 0) return agentStatus === "RUNNING" || agentStatus === "QUEUED" ? "working" : "later";
+  if (metricCount === 0) return agentStatus === "RUNNING" || agentStatus === "QUEUED" ? "working" : "optional";
   if (agentStatus === "FAILED" || agentStatus === "CONFLICT") return "blocked";
   if (agentStatus === "RUNNING" || agentStatus === "QUEUED") return "working";
   return "done";
