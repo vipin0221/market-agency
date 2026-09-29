@@ -1,12 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { use } from "react";
 import { DecisionPanel } from "@/components/decision-panel";
+import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
+import { NextActionButton } from "@/components/next-action-button";
 import { PostPreview } from "@/components/post-preview";
 import { RequestComposer } from "@/components/request-composer";
 import { useProjectState } from "@/components/use-project-state";
-import { buildJourney, decisionLabel, showFollowUpRequest } from "@/lib/journey";
+import { buildJourney, decisionLabel, nextAction, showFollowUpRequest } from "@/lib/journey";
 
 export default function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -31,12 +34,43 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
           {reviewStage ? <HumanStatusPill status={reviewStage.status} /> : null}
         </div>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          Approve, ask for a revision, or hold. Silence is not approval. Nothing publishes from this page.
+          Approve, ask for a revision, or hold. Silence is not approval. Nothing on this page is posted.
         </p>
       </header>
+      {waiting ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+          These drafts are not approved. Choose approve, revision, or hold. Leaving the page does not decide.
+        </p>
+      ) : null}
+      {state.pipeline.state === "failed" ? (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+          <FailedJobs jobs={state.jobs} />
+          <div className="mt-3">
+            <NextActionButton action={nextAction(state)} projectId={id} onDone={() => void reload()} />
+          </div>
+        </section>
+      ) : null}
       <div className={`grid items-start gap-6 ${pending ? "lg:grid-cols-[minmax(0,1fr)_22rem]" : ""}`}>
         <div className="flex flex-wrap gap-5">
-          {reviewAssets.length === 0 ? <p className="text-sm text-ink-soft">No posts are waiting in this round.</p> : null}
+          {reviewAssets.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">
+              {state.pipeline.state === "failed"
+                ? "Next: retry the failed step. Review stays closed until a draft exists. Waiting here does not approve anything."
+                : state.pipeline.state === "queued" || state.pipeline.state === "running"
+                  ? "Next: open Content when a draft appears. Waiting here does not approve anything."
+                  : state.approval.status === "APPROVED"
+                    ? "You already recorded a decision. Next: open Connect. Accounts stay NOT_CONNECTED."
+                    : "Next: Review opens when a draft is ready. Silence is not approval."}
+              {state.approval.status === "APPROVED" ? (
+                <>
+                  {" "}
+                  <Link href={`/projects/${id}/connect`} className="font-semibold text-accent">
+                    Open Connect
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          ) : null}
           {reviewAssets.map((asset) => (
             <PostPreview key={asset.id} asset={asset} businessName={businessName} website={state.client?.website} />
           ))}

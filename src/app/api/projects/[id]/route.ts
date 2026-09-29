@@ -1,9 +1,12 @@
+import { requireApiOperator } from "@/lib/auth";
 import { clientFields, updateClient } from "@/lib/projects";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiOperator();
+  if (auth instanceof Response) return auth;
   const { id } = await context.params;
   const json = await request.json().catch(() => null);
   const parsed = clientFields.safeParse(json);

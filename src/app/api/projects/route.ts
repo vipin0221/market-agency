@@ -1,3 +1,4 @@
+import { requireApiOperator } from "@/lib/auth";
 import { detectChannels } from "@/lib/planning";
 import { clientFields, createProject } from "@/lib/projects";
 
@@ -5,6 +6,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const auth = await requireApiOperator();
+  if (auth instanceof Response) return auth;
   const json = await request.json().catch(() => null);
   const parsed = clientFields.safeParse(withProjectName(json));
   if (!parsed.success) {

@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import { PasswordNotice } from "@/components/password-notice";
 import { ProjectNav } from "@/components/project-nav";
+import { requirePageOperator } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { llmStatus } from "@/lib/llm";
 
@@ -10,6 +12,7 @@ export default async function ProjectLayout({
   children: React.ReactNode;
   params: Promise<{ id: string }>;
 }) {
+  const session = await requirePageOperator();
   const { id } = await params;
   const project = await prisma.project.findUnique({
     where: { id },
@@ -29,8 +32,12 @@ export default async function ProjectLayout({
         projectName={project.name}
         businessName={project.client?.businessName ?? ""}
         projects={projects}
+        operatorEmail={session.operator.email}
       />
       <div className="px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto mb-4 max-w-6xl">
+          <PasswordNotice mustChange={session.operator.mustChangePassword} />
+        </div>
         {children}
         <footer className="mx-auto mt-12 max-w-6xl border-t border-line pt-4 text-xs leading-5 text-ink-soft">
           <p>

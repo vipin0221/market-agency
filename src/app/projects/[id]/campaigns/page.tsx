@@ -21,8 +21,8 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
     setFormError(null);
     const response = await fetch(`/api/campaigns/${campaignId}/authorize`, { method: "POST" });
     const data = (await response.json()) as { message?: string };
-    if (!response.ok) setFormError(data.message || "Publish was refused.");
-    else setMessage(data.message || "Authorized.");
+    if (!response.ok) setFormError(data.message || "Posting stayed off.");
+    else setMessage(data.message || "Posting stayed off.");
     await reload();
   }
 
@@ -62,10 +62,14 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Campaigns</p>
         <h1 className="mt-1 font-serif text-4xl">Optional plans</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          Organic posts do not need a campaign. Plans here are not activated. Authorize publish will not go live.
+          Optional. Organic posts do not need a campaign. Plans here are not activated, and this version does not post them.
         </p>
       </header>
-      {state.campaigns.length === 0 ? <p className="text-sm text-ink-soft">Campaign Architect has not written a campaign for this project.</p> : null}
+      {state.campaigns.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">
+          Next: you can skip campaigns. A plan shows up here only after the journey writes one, and it stays not activated.
+        </p>
+      ) : null}
       {state.campaigns.map((campaign) => (
         <article key={campaign.id} className="rounded-xl border border-line bg-panel p-5 shadow-card">
           <div className="flex flex-wrap items-center gap-2">
@@ -77,10 +81,10 @@ export default function CampaignsPage({ params }: { params: Promise<{ id: string
           <p className="mt-3 text-sm text-ink-soft">
             Content objects on this campaign: {state.contentAssets.filter((asset) => asset.campaignId === campaign.id).length}
           </p>
-          <button type="button" onClick={() => authorize(campaign.id)} className="mt-4 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white">
-            Authorize publish
+          <button type="button" onClick={() => authorize(campaign.id)} className="mt-4 rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
+            Check posting
           </button>
-          <p className="mt-2 text-xs text-ink-soft">This stays refused until a real connection exists. It does not publish.</p>
+          <p className="mt-2 text-xs leading-5 text-ink-soft">Phase 1 does not post or activate. This check stays refused and does not mark the plan live.</p>
         </article>
       ))}
       {formError ? <p className="text-sm text-rose-800">{formError}</p> : null}

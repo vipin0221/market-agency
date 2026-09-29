@@ -4,21 +4,24 @@ import Link from "next/link";
 import { use } from "react";
 import { ClientForm } from "@/components/client-form";
 import { ExcerptList } from "@/components/excerpt-list";
+import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
+import { NextActionButton } from "@/components/next-action-button";
 import { useProjectState } from "@/components/use-project-state";
-import { buildJourney, excerptsFor, focusStage, type StageId } from "@/lib/journey";
+import { buildJourney, excerptsFor, focusStage, nextAction, type StageId } from "@/lib/journey";
 
 const order: StageId[] = ["brand", "research", "strategy", "content", "review", "connect", "campaigns", "reports"];
 
 export default function JourneyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { state, error } = useProjectState(id);
+  const { state, error, reload } = useProjectState(id);
   if (error) return <p className="text-sm text-rose-800">{error}</p>;
   if (!state || !state.client) return <p className="text-sm">Loading this brand…</p>;
 
   const stages = buildJourney(state);
   const client = state.client;
+  const action = nextAction(state);
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
@@ -35,8 +38,21 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
           <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{state.workflow.requestText}</p>
         </section>
       ) : (
-        <p className="text-sm text-ink-soft">No request yet. Start one from Overview.</p>
+        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-sm leading-6 text-ink-soft">
+          No request yet. Next: write one on Overview. Nothing is posted from it.
+        </p>
       )}
+      {state.pipeline.state === "failed" || state.pipeline.stalled ? (
+        <section className="rounded-2xl border border-rose-200 bg-panel px-5 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
+          <h2 className="mt-2 font-serif text-3xl">{action.title}</h2>
+          <p className="mt-2 text-sm leading-6 text-ink-soft">{action.detail}</p>
+          <FailedJobs jobs={state.jobs} />
+          <div className="mt-4">
+            <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
+          </div>
+        </section>
+      ) : null}
       <JourneyStrip stages={stages} currentId={focusStage(stages)} />
       {order.map((stageId) => {
         const stage = stages.find((item) => item.id === stageId);

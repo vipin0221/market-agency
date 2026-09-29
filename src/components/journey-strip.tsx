@@ -27,11 +27,12 @@ export function JourneyStrip({ stages, currentId }: { stages: JourneyStage[]; cu
               >
                 <span className={`text-[10px] uppercase tracking-[0.14em] ${current ? "text-paper/60" : "text-ink-soft"}`}>
                   {index + 1}
+                  {current && stage.status !== "done" ? " · Next" : ""}
                   {stage.optional && stage.status !== "optional" ? " · Optional" : ""}
                 </span>
                 <span className="mt-1 block text-sm font-semibold">{stage.label}</span>
                 <span className="mt-2 block">
-                  <HumanStatusPill status={stage.status} inverse={current} />
+                  <HumanStatusPill status={stage.status} inverse={current} label={stage.statusLabel} />
                 </span>
               </Link>
             </li>

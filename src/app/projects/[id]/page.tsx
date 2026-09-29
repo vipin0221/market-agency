@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { use } from "react";
+import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
+import { NextActionButton } from "@/components/next-action-button";
 import { PostPreview } from "@/components/post-preview";
 import { RequestComposer } from "@/components/request-composer";
 import { useProjectState } from "@/components/use-project-state";
@@ -24,21 +26,31 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="mx-auto grid max-w-6xl gap-8">
       <section className={`rounded-3xl border bg-panel px-6 py-7 shadow-card ${frame}`}>
-        <HumanStatusPill status={action.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
+          <HumanStatusPill status={action.status} />
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+            Pipeline · {state.pipeline.label}
+            {state.pipeline.agentName ? ` · ${state.pipeline.agentName}` : ""}
+          </p>
+        </div>
         <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">{state.client.businessName}</p>
         <h1 className="mt-1 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">{action.title}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">{action.detail}</p>
         {state.workflow?.requestText ? <p className="mt-4 max-w-2xl line-clamp-3 text-sm leading-6">“{state.workflow.requestText}”</p> : null}
-        <div className="mt-5">
-          {action.href.startsWith("#") ? (
-            <a href={action.href} className="inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
-              {action.cta}
-            </a>
-          ) : (
-            <Link href={action.href} className="inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
-              {action.cta}
+        <FailedJobs jobs={state.jobs} />
+        <div className="mt-5 flex flex-wrap items-center gap-4">
+          <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
+          {posts.length > 0 && !action.href.endsWith("/content") ? (
+            <Link href={`/projects/${id}/content`} className="text-sm font-semibold text-accent">
+              Preview posts
             </Link>
-          )}
+          ) : null}
+          {action.href.endsWith("/review") ? null : state.approval.status === "AWAITING_APPROVAL" ? (
+            <Link href={`/projects/${id}/review`} className="text-sm font-semibold text-accent">
+              Review drafts
+            </Link>
+          ) : null}
         </div>
       </section>
       <JourneyStrip stages={stages} currentId={focusStage(stages)} />
@@ -50,8 +62,12 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
           </Link>
         </div>
         {posts.length === 0 ? (
-          <p className="mt-3 rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm text-ink-soft">
-            Posts will show up here as soon as they are drafted.
+          <p className="mt-3 rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">
+            {state.pipeline.state === "failed"
+              ? "Next: retry the failed step above. This list stays empty until a draft is actually written."
+              : state.pipeline.state === "queued" || state.pipeline.state === "running"
+                ? "Next: wait here. Drafts show up when the content step finishes. Waiting does not approve them."
+                : "Next: write a request below if this brand does not have one yet. Nothing is posted from it."}
           </p>
         ) : (
           <div className="mt-4 flex gap-4 overflow-x-auto pb-2">

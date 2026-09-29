@@ -65,7 +65,9 @@ export default function ReportsPage({ params }: { params: Promise<{ id: string }
         </p>
       </header>
       {state.metrics.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-sm text-ink-soft">No results yet.</p>
+        <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-sm leading-6 text-ink-soft">
+          Next: record a result you actually observed, or skip reports. No numbers are imported, and none are invented.
+        </p>
       ) : (
         <ul className="grid gap-2">
           {state.metrics.map((metric) => (

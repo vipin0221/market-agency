@@ -1,6 +1,7 @@
-import { AGENTS } from "./catalog";
+import { agentByKey, AGENTS } from "./catalog";
 import { prisma } from "./db";
 import { llmStatus } from "./llm";
+import { describePipeline } from "./pipeline";
 import { parseJson } from "./types";
 
 export async function getProjectState(projectId: string) {
@@ -8,7 +9,10 @@ export async function getProjectState(projectId: string) {
     where: { id: projectId },
     include: {
       client: true,
-      workflows: { orderBy: { createdAt: "desc" } },
+      workflows: {
+        orderBy: { createdAt: "desc" },
+        include: { jobs: { orderBy: [{ sequence: "asc" }, { createdAt: "asc" }] } },
+      },
       outputs: { orderBy: { createdAt: "desc" } },
       approvals: { orderBy: { createdAt: "desc" } },
       campaigns: { orderBy: { createdAt: "desc" } },
@@ -98,6 +102,29 @@ export async function getProjectState(projectId: string) {
   else if (gateIndex === -1 || workflow.cursor < gateIndex) approvalStatus = "WAITING";
 
   const connected = project.integrations.filter((item) => item.status === "CONNECTED").length;
+  const jobs = (workflow?.jobs ?? []).map((job) => ({
+    id: job.id,
+    agentKey: job.agentKey,
+    agentName: agentByKey(job.agentKey)?.name ?? job.agentKey,
+    status: job.status,
+    error: job.error,
+    sequence: job.sequence,
+    attempts: job.attempts,
+    updatedAt: job.updatedAt.toISOString(),
+    createdAt: job.createdAt.toISOString(),
+  }));
+  const pipeline = describePipeline({
+    workflow: workflow
+      ? {
+          status: workflow.status,
+          outcome: workflow.outcome,
+          error: workflow.error,
+          blockerSummary: workflow.blockerSummary,
+        }
+      : null,
+    approvalStatus,
+    jobs,
+  });
 
   return {
     llmConfigured: llmStatus().configured,
@@ -148,6 +175,8 @@ export async function getProjectState(projectId: string) {
       note: latestDecision?.note ?? "",
       decidedAt: latestDecision?.decidedAt?.toISOString() ?? null,
     },
+    jobs,
+    pipeline,
     approvals: project.approvals.map((item) => ({
       id: item.id,
       workflowId: item.workflowId,

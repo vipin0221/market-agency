@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { HumanStatusPill } from "@/components/human-status";
+import { PasswordNotice } from "@/components/password-notice";
+import { SignOutButton } from "@/components/sign-out-button";
+import { requirePageOperator } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { workflowLabel } from "@/lib/journey";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const session = await requirePageOperator();
   const projects = await prisma.project.findMany({
     orderBy: { updatedAt: "desc" },
     include: { client: true, workflows: { orderBy: { createdAt: "desc" }, take: 1 } },
@@ -16,12 +20,24 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Agency OS</p>
-      <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Agency OS</p>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="hidden text-ink-soft sm:inline">{session.operator.email}</span>
+          <Link href="/account" className="font-semibold">
+            Account
+          </Link>
+          <SignOutButton className="font-semibold" />
+        </div>
+      </div>
+      <div className="mt-4">
+        <PasswordNotice mustChange={session.operator.mustChangePassword} />
+      </div>
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-serif text-5xl leading-tight">Your brands</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-ink-soft">
-            One brand or many, the path is the same. Add the business, get the posts, then review them. Campaigns stay optional.
+            Home, then a brand, then drafts, then review. Connect stays not connected. Campaigns and reports are optional. Nothing here posts live.
           </p>
         </div>
         <Link href="/new" className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper">
@@ -29,8 +45,8 @@ export default async function HomePage() {
         </Link>
       </div>
       {projects.length === 0 ? (
-        <p className="mt-8 rounded-2xl border border-dashed border-line bg-panel px-5 py-8 text-sm text-ink-soft">
-          No brands yet. Add one to start the first posts.
+        <p className="mt-8 rounded-2xl border border-dashed border-line bg-panel px-5 py-8 text-sm leading-6 text-ink-soft">
+          No brands yet. Next: add a brand. You will enter the business name, the marketing request, and at least one channel. Drafts wait for review. Nothing is posted.
         </p>
       ) : (
         <ul className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -49,6 +65,7 @@ export default async function HomePage() {
                     <p className="mt-1 text-sm text-ink-soft">{project.client.businessName}</p>
                   ) : null}
                   <p className="mt-4 text-sm">{channels}</p>
+                  <p className="mt-3 text-sm font-semibold text-accent">Open · next step</p>
                 </Link>
               </li>
             );

@@ -30,10 +30,15 @@ export default function ConnectPage({ params }: { params: Promise<{ id: string }
     <div className="mx-auto max-w-3xl">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Connect</p>
       <h1 className="mt-1 font-serif text-4xl">Accounts</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
+      <p className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-950">
+        Status stays NOT_CONNECTED. This page does not start a sign-in and does not post.
+      </p>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">
         {connected === 0
-          ? "None of these accounts are connected. Connect does not start a real sign-in, and it will not mark an account live or publish a post."
-          : `${connected} connected. Publishing is still off in this version.`}
+          ? state.integrations.length === 0
+            ? "Next: accounts are listed with the brand and stay NOT_CONNECTED. Phase 1 does not sign in."
+            : "Next: leave these accounts not connected. There is no live posting in this version."
+          : `${connected} connected. Posting is still off in this version.`}
       </p>
       {notice ? <p className="mt-4 rounded-xl border border-line bg-panel px-4 py-3 text-sm leading-6">{notice}</p> : null}
       <ul className="mt-6 grid gap-3">
@@ -41,12 +46,14 @@ export default function ConnectPage({ params }: { params: Promise<{ id: string }
           <li key={integration.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-panel px-4 py-4">
             <div>
               <p className="font-medium">{integration.label}</p>
-              <p className="mt-1 text-xs text-ink-soft">{integration.status === "CONNECTED" ? "Connected" : "Not connected"}</p>
+              <p className="mt-1 text-xs font-semibold tracking-wide text-ink-soft">
+                {integration.status === "CONNECTED" ? "CONNECTED" : "NOT_CONNECTED"}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <StatusPill value={integration.status} />
               <button type="button" onClick={() => void connect(integration.id)} className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
-                Connect
+                Sign-in unavailable
               </button>
             </div>
           </li>

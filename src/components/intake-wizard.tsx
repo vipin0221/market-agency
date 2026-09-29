@@ -190,6 +190,9 @@ export function IntakeWizard() {
           ) : null}
           {step === 3 ? (
             <>
+              <p className="rounded-xl border border-line bg-paper px-3 py-3 text-sm leading-6 text-ink-soft">
+                Starting writes drafts only. Review comes before any approval. Nothing is posted.
+              </p>
               <fieldset>
                 <legend className="text-sm font-medium">Channels *</legend>
                 <div className="mt-2 flex flex-wrap gap-2">

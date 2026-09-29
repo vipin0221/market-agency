@@ -28,7 +28,7 @@ export function RequestComposer({ projectId, onDone }: { projectId: string; onDo
   return (
     <form id="request" onSubmit={submit} className="scroll-mt-24 rounded-2xl border border-line bg-panel p-5 shadow-card">
       <h2 className="font-serif text-2xl">Another round</h2>
-      <p className="mt-1 text-sm leading-6 text-ink-soft">Describe the next posts in plain language. This does not publish anything.</p>
+      <p className="mt-1 text-sm leading-6 text-ink-soft">Describe the next posts in plain language. This starts drafts only. It does not post anything.</p>
       <textarea
         required
         value={request}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SignOutButton } from "@/components/sign-out-button";
 
 const primary = [
   ["Overview", ""],
@@ -29,11 +30,13 @@ export function ProjectNav({
   projectName,
   businessName,
   projects,
+  operatorEmail,
 }: {
   projectId: string;
   projectName: string;
   businessName: string;
   projects: { id: string; name: string }[];
+  operatorEmail: string;
 }) {
   const pathname = usePathname();
   const base = `/projects/${projectId}`;
@@ -98,6 +101,13 @@ export function ProjectNav({
           <Link href="/new" className="mt-1 block rounded-md border border-white/15 px-3 py-2 text-center text-sm hover:bg-white/10">
             New brand
           </Link>
+          <p className="mt-3 truncate px-2 text-[11px] text-paper/50">{operatorEmail}</p>
+          <div className="mt-1 flex items-center gap-3 px-2">
+            <Link href="/account" className="text-sm text-paper/80 hover:text-paper">
+              Account
+            </Link>
+            <SignOutButton className="text-sm text-paper/80 hover:text-paper" />
+          </div>
         </div>
       </aside>
       <div className="sticky top-0 z-20 border-b border-white/10 bg-ink text-paper md:hidden">
@@ -106,6 +116,7 @@ export function ProjectNav({
             Agency OS
           </Link>
           <p className="truncate text-sm">{projectName}</p>
+          <SignOutButton className="text-xs text-paper/70" />
         </div>
         <div className="flex gap-1 overflow-x-auto px-3 pb-2">
           {primary.map(([label, href]) => (

@@ -1,4 +1,5 @@
 import { audit } from "./audit";
+import { ensureDefaultOperator } from "./auth";
 import { prisma, prepareDatabase } from "./db";
 import { buildPlan, buildWorkContext } from "./planning";
 import { runSpecialist } from "./specialist";
@@ -11,11 +12,17 @@ export function startWorker() {
   globalForWorker.agencyWorker = true;
   void (async () => {
     await prepareDatabase();
+    try {
+      await ensureDefaultOperator();
+    } catch (error) {
+      console.error("operator seed failed", error);
+    }
     await prisma.job.updateMany({
       where: { status: "RUNNING", attempts: { lt: 3 } },
       data: { status: "QUEUED", lockedAt: null },
     });
     await recoverStuckJobs();
+    await alignRunningWorkflows();
   })().catch((error) => console.error("worker startup failed", error));
   const intervalMs = Number(process.env.WORKER_INTERVAL_MS || 1200);
   setInterval(() => {
@@ -34,8 +41,9 @@ export function tick() {
 
 async function processOne() {
   await recoverStuckJobs();
+  await alignRunningWorkflows();
   const job = await prisma.job.findFirst({
-    where: { status: "QUEUED" },
+    where: { status: "QUEUED", workflow: { status: { in: ["QUEUED", "RUNNING"] } } },
     orderBy: [{ createdAt: "asc" }, { sequence: "asc" }],
   });
   if (!job) return { processed: false, reason: "idle" };
@@ -56,10 +64,17 @@ async function processOne() {
     },
   });
   if (!workflow || !workflow.project.client) {
+    const message = "Project or client record is missing.";
     await prisma.job.update({
       where: { id: job.id },
-      data: { status: "FAILED", error: "Project or client record is missing." },
+      data: { status: "FAILED", error: message },
     });
+    if (workflow) {
+      await prisma.workflow.update({
+        where: { id: workflow.id },
+        data: { status: "FAILED", outcome: "FAILED", error: message, blockerSummary: message },
+      });
+    }
     return { processed: true, status: "FAILED", agentKey: job.agentKey };
   }
 
@@ -512,6 +527,60 @@ export async function queueIntelligence(workflowId: string) {
   });
 }
 
+export async function retryFailedJob(projectId: string, actorEmail: string) {
+  const workflow = await prisma.workflow.findFirst({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+    include: { jobs: { orderBy: { sequence: "desc" } } },
+  });
+  if (!workflow) return { ok: false as const, message: "There is no round to retry." };
+  const failed = workflow.jobs.find((job) => job.status === "FAILED" || job.status === "CONFLICT");
+  if (!failed) return { ok: false as const, message: "No failed step is waiting to retry." };
+  await prisma.job.update({
+    where: { id: failed.id },
+    data: { status: "QUEUED", error: "", lockedAt: null },
+  });
+  await prisma.workflow.update({
+    where: { id: workflow.id },
+    data: {
+      status: "QUEUED",
+      outcome: "",
+      error: "",
+      blockerSummary: "Retry queued. The step runs again and does not invent a result.",
+    },
+  });
+  await audit({
+    projectId,
+    workflowId: workflow.id,
+    actor: `operator:${actorEmail}`,
+    action: "JOB_RETRY",
+    detail: `${failed.agentKey} was queued again after ${failed.status}.`,
+  });
+  startWorker();
+  return { ok: true as const, message: "Retry queued. The failed step will run again and will not invent a result." };
+}
+
+async function alignRunningWorkflows() {
+  const workflows = await prisma.workflow.findMany({
+    where: { status: { in: ["QUEUED", "RUNNING"] } },
+    include: { jobs: { orderBy: [{ sequence: "desc" }, { createdAt: "desc" }], take: 1 } },
+  });
+  for (const workflow of workflows) {
+    const latest = workflow.jobs[0];
+    if (!latest || (latest.status !== "FAILED" && latest.status !== "CONFLICT")) continue;
+    const message = latest.error || `${latest.agentKey} failed. Retry this step or start another request.`;
+    await prisma.workflow.update({
+      where: { id: workflow.id },
+      data: {
+        status: latest.status === "CONFLICT" ? "CONFLICT" : "FAILED",
+        outcome: latest.status === "CONFLICT" ? "CONFLICT" : "FAILED",
+        error: message,
+        blockerSummary: message,
+      },
+    });
+  }
+}
+
 async function recoverStuckJobs() {
   const cutoff = new Date(Date.now() - 5 * 60 * 1000);
   const stuck = await prisma.job.findMany({
@@ -525,7 +594,12 @@ async function recoverStuckJobs() {
       });
       await prisma.workflow.update({
         where: { id: job.workflowId },
-        data: { status: "FAILED", outcome: "FAILED", error: "A job failed after repeated attempts." },
+        data: {
+          status: "FAILED",
+          outcome: "FAILED",
+          error: "A job failed after repeated attempts.",
+          blockerSummary: `${job.agentKey} stayed running and was marked failed. Retry this step or start another request.`,
+        },
       });
     } else {
       await prisma.job.update({ where: { id: job.id }, data: { status: "QUEUED" } });

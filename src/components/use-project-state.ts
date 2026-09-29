@@ -10,6 +10,10 @@ export function useProjectState(projectId: string) {
   const reload = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/state`, { cache: "no-store" });
+      if (response.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
       if (!response.ok) {
         setError("The project record could not be read.");
         return;
