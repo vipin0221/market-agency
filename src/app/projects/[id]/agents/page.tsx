@@ -19,7 +19,7 @@ export default function AgentsPage({ params }: { params: Promise<{ id: string }>
       <h1 className="mt-1 font-serif text-4xl">From the agent run table</h1>
       <p className="mt-2 text-sm text-ink-soft">Idle, waiting, and skipped are derived from the plan. Queued, running, failed, and needs-you are stored. A failed step stays failed until you retry it from Overview.</p>
       <FailedJobs jobs={state.jobs} />
-      <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-panel">
+      <div className="mt-6 min-w-0 overflow-x-auto rounded-xl border border-line bg-panel">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-line text-xs uppercase tracking-wide text-ink-soft">
             <tr>

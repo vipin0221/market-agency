@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { useProjectState } from "@/components/use-project-state";
 
@@ -27,30 +28,32 @@ export default function ConnectPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Connect</p>
-      <h1 className="mt-1 font-serif text-4xl">Accounts</h1>
-      <p className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-950">
+    <div className="grid min-w-0 max-w-3xl gap-0">
+      <PageHeader
+        kicker="Connect"
+        title="Accounts"
+        lede={
+          connected === 0
+            ? state.integrations.length === 0
+              ? "Next: accounts are listed with the brand and stay NOT_CONNECTED. Phase 1 does not sign in."
+              : "Next: leave these accounts not connected. There is no live posting in this version."
+            : `${connected} connected. Posting is still off in this version.`
+        }
+      />
+      <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-950">
         Status stays NOT_CONNECTED. This page does not start a sign-in and does not post.
       </p>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">
-        {connected === 0
-          ? state.integrations.length === 0
-            ? "Next: accounts are listed with the brand and stay NOT_CONNECTED. Phase 1 does not sign in."
-            : "Next: leave these accounts not connected. There is no live posting in this version."
-          : `${connected} connected. Posting is still off in this version.`}
-      </p>
-      {notice ? <p className="mt-4 rounded-xl border border-line bg-panel px-4 py-3 text-sm leading-6">{notice}</p> : null}
+      {notice ? <p className="mt-4 break-words rounded-xl border border-line bg-panel px-4 py-3 text-sm leading-6">{notice}</p> : null}
       <ul className="mt-6 grid gap-3">
         {state.integrations.map((integration) => (
-          <li key={integration.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-panel px-4 py-4">
-            <div>
-              <p className="font-medium">{integration.label}</p>
+          <li key={integration.id} className="grid gap-3 rounded-2xl border border-line bg-panel px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <p className="break-words font-medium">{integration.label}</p>
               <p className="mt-1 text-xs font-semibold tracking-wide text-ink-soft">
                 {integration.status === "CONNECTED" ? "CONNECTED" : "NOT_CONNECTED"}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
               <StatusPill value={integration.status} />
               <button type="button" onClick={() => void connect(integration.id)} className="rounded-md border border-line bg-white px-3 py-2 text-sm font-semibold">
                 Sign-in unavailable

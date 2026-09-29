@@ -19,5 +19,9 @@ export function HumanStatusPill({
   label?: string;
 }) {
   const tone = inverse ? "bg-white/15 text-paper" : tones[status];
-  return <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{label ?? HUMAN_LABEL[status]}</span>;
+  return (
+    <span className={`inline-flex max-w-full rounded-full px-2 py-0.5 text-center text-[11px] font-semibold leading-4 ${tone}`}>
+      {label ?? HUMAN_LABEL[status]}
+    </span>
+  );
 }

@@ -26,28 +26,27 @@ export default async function ProjectLayout({
   const llm = llmStatus();
 
   return (
-    <div className="min-h-screen md:pl-64">
-      <ProjectNav
-        projectId={id}
-        projectName={project.name}
-        businessName={project.client?.businessName ?? ""}
-        projects={projects}
-        operatorEmail={session.operator.email}
-      />
-      <div className="px-4 py-6 md:px-8 md:py-8">
-        <div className="mx-auto mb-4 max-w-6xl">
-          <PasswordNotice mustChange={session.operator.mustChangePassword} />
+    <ProjectNav
+      projectId={id}
+      projectName={project.name}
+      businessName={project.client?.businessName ?? ""}
+      projects={projects}
+      operatorEmail={session.operator.email}
+    >
+      {session.operator.mustChangePassword ? (
+        <div className="mb-5">
+          <PasswordNotice mustChange />
         </div>
-        {children}
-        <footer className="mx-auto mt-12 max-w-6xl border-t border-line pt-4 text-xs leading-5 text-ink-soft">
-          <p>
-            {llm.configured
-              ? `A model may draft copy (${llm.provider}${llm.model ? ` · ${llm.model}` : ""}). Drafts are not approved, and nothing is published.`
-              : "No model key is set. Drafts use only this brand’s fields. Nothing is published."}
-          </p>
-          <p className="mt-1">Accounts stay not connected until a real sign-in exists. Operator tools are under Advanced.</p>
-        </footer>
-      </div>
-    </div>
+      ) : null}
+      {children}
+      <footer className="mt-12 border-t border-line pt-4 text-xs leading-5 text-ink-soft">
+        <p>
+          {llm.configured
+            ? `A model may draft copy (${llm.provider}${llm.model ? ` · ${llm.model}` : ""}). Drafts are not approved, and nothing is published.`
+            : "No model key is set. Drafts use only this brand’s fields. Nothing is published."}
+        </p>
+        <p className="mt-1">Accounts stay not connected until a real sign-in exists. Operator tools are under Advanced.</p>
+      </footer>
+    </ProjectNav>
   );
 }

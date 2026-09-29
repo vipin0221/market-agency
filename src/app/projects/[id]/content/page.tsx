@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { FailedJobs } from "@/components/failed-jobs";
 import { NextActionButton } from "@/components/next-action-button";
+import { PageHeader } from "@/components/page-header";
 import { PostPreview } from "@/components/post-preview";
 import { useProjectState } from "@/components/use-project-state";
 import { nextAction } from "@/lib/journey";
@@ -22,14 +23,12 @@ export default function ContentPage({ params }: { params: Promise<{ id: string }
   const businessName = state.client.businessName || state.project.name;
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Content</p>
-        <h1 className="mt-1 font-serif text-4xl">Posts</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          These are drafts. Next is Review when you are ready. They are not approved until you say so, and they are not posted.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Content"
+        title="Posts"
+        lede="These are drafts. Next is Review when you are ready. They are not approved until you say so, and they are not posted."
+      />
       {state.pipeline.state === "failed" ? (
         <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
           <p className="text-sm font-semibold text-rose-950">A step failed before these drafts were finished.</p>
@@ -92,7 +91,7 @@ function PostGrid({
     return empty ? <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">{empty}</p> : null;
   }
   return (
-    <div className="flex flex-wrap gap-5">
+    <div className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
       {assets.map((asset) => (
         <PostPreview key={asset.id} asset={asset} businessName={businessName} website={website} />
       ))}

@@ -58,7 +58,7 @@ export function ContentCalendar({ projectId, assets }: { projectId: string; asse
           ))}
         </div>
       </div>
-      <div className={mode === "month" ? "overflow-x-auto" : ""}>
+      <div className={mode === "month" ? "min-w-0 max-w-full overflow-x-auto" : "min-w-0"}>
       {mode === "month" ? (
         <div className="grid min-w-[42rem] grid-cols-7 gap-1 text-[11px] uppercase tracking-wide text-ink-soft">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
@@ -68,7 +68,7 @@ export function ContentCalendar({ projectId, assets }: { projectId: string; asse
           ))}
         </div>
       ) : null}
-      <div className={`grid gap-2 ${mode === "week" ? "md:grid-cols-7" : "mt-1 min-w-[42rem] grid-cols-7"}`}>
+      <div className={`grid gap-2 ${mode === "week" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-7" : "mt-1 min-w-[42rem] grid-cols-7"}`}>
         {days.map((day) => {
           const items = placed.dated.filter((item) => sameDay(item.at, day));
           const inMonth = day.getMonth() === cursor.getMonth();
@@ -83,7 +83,7 @@ export function ContentCalendar({ projectId, assets }: { projectId: string; asse
               <ul className="mt-2 grid gap-1">
                 {items.map((item) => (
                   <li key={item.asset.id}>
-                    <Link href={`/projects/${projectId}/content#post-${item.asset.id}`} className="block rounded-md bg-paper px-1.5 py-1 text-[11px] leading-4 hover:text-accent">
+                    <Link href={`/projects/${projectId}/content#post-${item.asset.id}`} className="block break-words rounded-md bg-paper px-1.5 py-1 text-[11px] leading-4 hover:text-accent">
                       <span className="font-semibold">{item.asset.platform}</span> {item.asset.hook}
                       {item.hasTime ? <span className="mt-0.5 block text-ink-soft">{item.at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</span> : null}
                     </Link>

@@ -24,20 +24,20 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
     action.status === "blocked" ? "border-rose-200" : action.status === "waiting" ? "border-amber-200" : "border-line";
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-8">
-      <section className={`rounded-3xl border bg-panel px-6 py-7 shadow-card ${frame}`}>
+    <div className="grid min-w-0 gap-8">
+      <section className={`min-w-0 rounded-2xl border bg-panel px-5 py-6 shadow-card sm:px-7 sm:py-7 ${frame}`}>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
           <HumanStatusPill status={action.status} />
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+          <p className="min-w-0 break-words text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
             Pipeline · {state.pipeline.label}
             {state.pipeline.agentName ? ` · ${state.pipeline.agentName}` : ""}
           </p>
         </div>
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">{state.client.businessName}</p>
-        <h1 className="mt-1 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">{action.title}</h1>
+        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{state.client.businessName}</p>
+        <h1 className="mt-1 max-w-3xl break-words font-serif text-3xl leading-tight tracking-tight text-balance sm:text-4xl">{action.title}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">{action.detail}</p>
-        {state.workflow?.requestText ? <p className="mt-4 max-w-2xl line-clamp-3 text-sm leading-6">“{state.workflow.requestText}”</p> : null}
+        {state.workflow?.requestText ? <p className="mt-4 max-w-2xl break-words text-sm leading-6">“{state.workflow.requestText}”</p> : null}
         <FailedJobs jobs={state.jobs} />
         <div className="mt-5 flex flex-wrap items-center gap-4">
           <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
@@ -70,7 +70,7 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
                 : "Next: write a request below if this brand does not have one yet. Nothing is posted from it."}
           </p>
         ) : (
-          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {posts.map((asset) => (
               <PostPreview key={asset.id} asset={asset} businessName={state.client?.businessName || state.project.name} website={state.client?.website} />
             ))}

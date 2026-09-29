@@ -6,6 +6,7 @@ import { DecisionPanel } from "@/components/decision-panel";
 import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { NextActionButton } from "@/components/next-action-button";
+import { PageHeader } from "@/components/page-header";
 import { PostPreview } from "@/components/post-preview";
 import { RequestComposer } from "@/components/request-composer";
 import { useProjectState } from "@/components/use-project-state";
@@ -26,17 +27,13 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
   const reviewStage = buildJourney(state).find((item) => item.id === "review");
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Review</p>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="font-serif text-4xl">{waiting ? "Your decision" : "Decisions"}</h1>
-          {reviewStage ? <HumanStatusPill status={reviewStage.status} /> : null}
-        </div>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          Approve, ask for a revision, or hold. Silence is not approval. Nothing on this page is posted.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Review"
+        title={waiting ? "Your decision" : "Decisions"}
+        lede="Approve, ask for a revision, or hold. Silence is not approval. Nothing on this page is posted."
+        aside={reviewStage ? <HumanStatusPill status={reviewStage.status} /> : null}
+      />
       {waiting ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
           These drafts are not approved. Choose approve, revision, or hold. Leaving the page does not decide.
@@ -50,10 +47,10 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
           </div>
         </section>
       ) : null}
-      <div className={`grid items-start gap-6 ${pending ? "lg:grid-cols-[minmax(0,1fr)_22rem]" : ""}`}>
-        <div className="flex flex-wrap gap-5">
+      <div className={`grid min-w-0 items-start gap-6 ${pending ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
+        <div className={`grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 ${pending ? "order-2 lg:order-1 xl:grid-cols-2" : "xl:grid-cols-3"}`}>
           {reviewAssets.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft">
+            <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-8 text-sm leading-6 text-ink-soft sm:col-span-2">
               {state.pipeline.state === "failed"
                 ? "Next: retry the failed step. Review stays closed until a draft exists. Waiting here does not approve anything."
                 : state.pipeline.state === "queued" || state.pipeline.state === "running"
@@ -76,7 +73,7 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
           ))}
         </div>
         {pending ? (
-          <div className="lg:sticky lg:top-6">
+          <div className="order-1 min-w-0 lg:sticky lg:top-6 lg:order-2">
             <DecisionPanel
               approvalId={pending.id}
               onDone={() => void reload()}

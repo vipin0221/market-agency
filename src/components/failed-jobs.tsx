@@ -8,7 +8,7 @@ export function FailedJobs({
   return (
     <ul className="mt-4 grid gap-2">
       {failed.map((job) => (
-        <li key={job.id} className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm leading-6 text-rose-950">
+        <li key={job.id} className="break-words rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm leading-6 text-rose-950">
           <span className="font-semibold">{job.agentName}</span>
           {" · "}
           {job.status === "CONFLICT" ? "Needs a decision" : "Failed"}

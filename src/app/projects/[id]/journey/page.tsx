@@ -8,6 +8,7 @@ import { FailedJobs } from "@/components/failed-jobs";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
 import { NextActionButton } from "@/components/next-action-button";
+import { PageHeader } from "@/components/page-header";
 import { useProjectState } from "@/components/use-project-state";
 import { buildJourney, excerptsFor, focusStage, nextAction, type StageId } from "@/lib/journey";
 
@@ -24,18 +25,16 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
   const action = nextAction(state);
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Journey</p>
-        <h1 className="mt-1 font-serif text-4xl">{state.project.name}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-          Brand through reports. Campaigns and reports come later, and a campaign is not required for organic posts.
-        </p>
-      </header>
+    <div className="grid min-w-0 gap-6">
+      <PageHeader
+        kicker="Journey"
+        title={state.project.name}
+        lede="Brand through reports. Campaigns and reports come later, and a campaign is not required for organic posts."
+      />
       {state.workflow ? (
         <section className="rounded-2xl border border-line bg-panel px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">You asked</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{state.workflow.requestText}</p>
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{state.workflow.requestText}</p>
         </section>
       ) : (
         <p className="rounded-2xl border border-dashed border-line bg-panel px-4 py-6 text-sm leading-6 text-ink-soft">
@@ -59,9 +58,9 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
         if (!stage) return null;
         const external = !stage.href.includes("#");
         return (
-          <section key={stage.id} id={stage.id} className="scroll-mt-24 rounded-2xl border border-line bg-panel p-5 shadow-card">
+          <section key={stage.id} id={stage.id} className="min-w-0 scroll-mt-24 rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-serif text-3xl">{stage.label}</h2>
+              <h2 className="break-words font-serif text-2xl sm:text-3xl">{stage.label}</h2>
               <HumanStatusPill status={stage.status} />
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">{stage.summary}</p>

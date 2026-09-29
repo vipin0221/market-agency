@@ -21,7 +21,7 @@ export function PostPreview({
   const frame = frameFor(asset);
 
   return (
-    <article id={`post-${asset.id}`} className="scroll-mt-24 w-[17.5rem] shrink-0">
+    <article id={`post-${asset.id}`} className="min-w-0 scroll-mt-24">
       {frame === "email" ? <EmailCard asset={asset} businessName={businessName} /> : null}
       {frame === "search" ? <SearchCard asset={asset} website={website} /> : null}
       {frame === "page" ? <PageCard asset={asset} businessName={businessName} /> : null}
@@ -59,10 +59,10 @@ function PhoneCard({ asset, businessName }: { asset: Asset; businessName: string
           </span>
         </header>
         <div className="flex aspect-[4/5] items-end bg-[#2a2420] px-4 py-5">
-          <p className="font-serif text-[1.65rem] leading-snug text-paper">{asset.hook}</p>
+          <p className="break-words font-serif text-2xl leading-snug text-paper">{asset.hook}</p>
         </div>
         <div className="max-h-40 space-y-2 overflow-y-auto px-3 py-3 text-sm leading-6">
-          <p className="whitespace-pre-wrap">{asset.caption}</p>
+          <p className="whitespace-pre-wrap break-words">{asset.caption}</p>
           {hashtags.length > 0 ? <p className="text-ink-soft">{hashtags.join(" ")}</p> : null}
           <p className="text-xs font-semibold uppercase tracking-wide text-accent">{asset.cta}</p>
         </div>
@@ -82,7 +82,7 @@ function EmailCard({ asset, businessName }: { asset: Asset; businessName: string
         {preheader ? <p className="mt-1 text-xs text-ink-soft">{preheader}</p> : null}
       </header>
       <div className="max-h-64 space-y-3 overflow-y-auto px-4 py-4 text-sm leading-6">
-        <p className="whitespace-pre-wrap">{asset.caption}</p>
+        <p className="whitespace-pre-wrap break-words">{asset.caption}</p>
         <p className="text-xs font-semibold uppercase tracking-wide text-accent">{asset.cta}</p>
       </div>
     </div>
@@ -112,7 +112,7 @@ function PageCard({ asset, businessName }: { asset: Asset; businessName: string 
       </div>
       <div className="space-y-2 px-4 py-4">
         <h3 className="font-serif text-2xl leading-snug">{asset.hook}</h3>
-        <p className="max-h-36 overflow-y-auto whitespace-pre-wrap text-sm leading-6">{asset.caption}</p>
+        <p className="max-h-36 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6">{asset.caption}</p>
         <p className="text-xs font-semibold uppercase tracking-wide text-accent">{asset.cta}</p>
       </div>
     </div>
