@@ -206,7 +206,7 @@ export function nextAction(state: ProjectState): NextAction {
       title: decided > 0 ? "Decide the remaining drafts" : "Review each draft",
       detail:
         waiting > 0
-          ? `${waiting} draft${waiting === 1 ? "" : "s"} still need a decision of their own. Approve, revise, or hold applies to the draft you select. Silence is not approval.`
+          ? `${waiting} draft${waiting === 1 ? "" : "s"} still need${waiting === 1 ? "s" : ""} a decision of ${waiting === 1 ? "its" : "their"} own. Approve, revise, or hold applies to the draft you select. Silence is not approval.`
           : "Approve, ask for a revision, or hold each draft. Leaving the page does not approve them. Nothing is posted.",
       href: link("/review"),
       cta: "Open review",

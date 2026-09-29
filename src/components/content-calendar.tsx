@@ -11,6 +11,7 @@ type Asset = ProjectState["contentAssets"][number];
 export function ContentCalendar({ projectId, assets, onScheduled }: { projectId: string; assets: Asset[]; onScheduled?: () => void }) {
   const [mode, setMode] = useState<"week" | "month">("week");
   const [cursor, setCursor] = useState(() => startOfWeek(new Date()));
+  const [notice, setNotice] = useState<string | null>(null);
 
   const placed = useMemo(() => {
     const dated: { asset: Asset; at: Date; hasTime: boolean }[] = [];
@@ -30,8 +31,27 @@ export function ContentCalendar({ projectId, assets, onScheduled }: { projectId:
     setCursor((current) => (mode === "week" ? addDays(current, direction * 7) : addMonths(current, direction)));
   }
 
+  function showSaved(at: Date, hook: string) {
+    setNotice(`Publish time stored for “${hook}”. Nothing was posted.`);
+    setCursor(mode === "week" ? startOfWeek(at) : new Date(at.getFullYear(), at.getMonth(), 1));
+    onScheduled?.();
+  }
+
   return (
     <div className="grid gap-6">
+      {notice ? <Banner tone="success" role="status">{notice}</Banner> : null}
+      <section id="unscheduled" className="scroll-mt-24 rounded-2xl border border-line bg-panel px-4 py-4">
+        <h2 className="font-serif text-2xl">Unscheduled</h2>
+        <p className="mt-1 text-sm leading-6 text-ink-soft">
+          Set a date and time to place a draft on the calendar. This stores the time only. Nothing is posted.
+        </p>
+        {placed.unscheduled.length === 0 ? <p className="mt-3 text-sm text-ink-soft">Every draft on this brand already has a stored time.</p> : null}
+        <ul className="mt-3 grid gap-3">
+          {placed.unscheduled.map((asset) => (
+            <ScheduleRow key={asset.id} projectId={projectId} asset={asset} onScheduled={showSaved} />
+          ))}
+        </ul>
+      </section>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => shift(-1)} className="rounded-md border border-line bg-panel px-3 py-1.5 text-sm">
@@ -96,44 +116,34 @@ export function ContentCalendar({ projectId, assets, onScheduled }: { projectId:
         })}
       </div>
       </div>
-      <section id="unscheduled" className="scroll-mt-24 rounded-2xl border border-line bg-panel px-4 py-4">
-        <h2 className="font-serif text-2xl">Unscheduled</h2>
-        <p className="mt-1 text-sm leading-6 text-ink-soft">
-          Set a date and time to place a draft on the calendar. This stores the time only. Nothing is posted.
-        </p>
-        {placed.unscheduled.length === 0 ? <p className="mt-3 text-sm text-ink-soft">Every draft on this brand already has a stored time.</p> : null}
-        <ul className="mt-3 grid gap-3">
-          {placed.unscheduled.map((asset) => (
-            <ScheduleRow key={asset.id} projectId={projectId} asset={asset} onScheduled={onScheduled} />
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }
 
-function ScheduleRow({ projectId, asset, onScheduled }: { projectId: string; asset: Asset; onScheduled?: () => void }) {
-  const [at, setAt] = useState("");
+function ScheduleRow({ projectId, asset, onScheduled }: { projectId: string; asset: Asset; onScheduled?: (at: Date, hook: string) => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function save(event: React.FormEvent) {
+  async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
+    const field = form.elements.namedItem("when");
+    const when = field instanceof HTMLInputElement ? field.value : "";
     setPending(true);
     setMessage(null);
     setError(null);
     const response = await fetch(`/api/projects/${projectId}/assets/${asset.id}/schedule`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ at }),
+      body: JSON.stringify({ at: when }),
     });
     const data = (await response.json()) as { message?: string };
     if (!response.ok) setError(data.message || "The time was not stored.");
     else {
-      setMessage(data.message || "Publish time stored.");
-      setAt("");
-      onScheduled?.();
+      setMessage("Stored on this draft. Nothing was posted.");
+      form.reset();
+      onScheduled?.(new Date(when), asset.hook);
     }
     setPending(false);
   }
@@ -146,7 +156,7 @@ function ScheduleRow({ projectId, asset, onScheduled }: { projectId: string; ass
       <form onSubmit={save} className="mt-3 flex flex-wrap items-end gap-3">
         <label className="block min-w-0 flex-1 text-sm">
           <span className="mb-1.5 block font-medium">Publish time</span>
-          <input required type="datetime-local" value={at} onChange={(event) => setAt(event.target.value)} className={fieldClass} />
+          <input required name="when" type="datetime-local" className={fieldClass} />
         </label>
         <button type="submit" disabled={pending} className={primaryButtonClass}>
           {pending ? "Saving…" : "Save publish time"}
