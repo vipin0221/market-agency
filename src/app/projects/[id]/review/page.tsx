@@ -35,14 +35,14 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
       <PageHeader
         kicker="Review"
         title={waiting ? "Your decision" : "Decisions"}
-        lede="Each draft has its own decision. Approve, revise, or hold applies only to the draft you select. Silence is not approval, and nothing is posted."
+        lede={
+          waiting
+            ? `${undecided.length} draft${undecided.length === 1 ? "" : "s"} still waiting. The panel names the selected draft. Leaving the page does not decide.`
+            : "Each draft has its own decision. Silence is not approval, and nothing is posted."
+        }
         aside={reviewStage ? <HumanStatusPill status={reviewStage.status} /> : null}
       />
-      {waiting ? (
-        <Banner tone="warning">
-          {undecided.length} draft{undecided.length === 1 ? "" : "s"} still waiting. The decision panel names the selected draft. Leaving the page does not decide.
-        </Banner>
-      ) : state.approval.status === "APPROVED" ? (
+      {waiting ? null : state.approval.status === "APPROVED" ? (
         <Banner tone="success" role="status">
           Every draft has a decision. Next:{" "}
           <Link href={`/projects/${id}/connect`} className="font-semibold underline">

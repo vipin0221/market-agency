@@ -5,7 +5,7 @@ import { use } from "react";
 import { BriefChecklist } from "@/components/brief-checklist";
 import { FailedJobs } from "@/components/failed-jobs";
 import { JobProgress } from "@/components/job-progress";
-import { Banner, EmptyState, LoadingLine } from "@/components/ui";
+import { Banner, EmptyState, LoadingLine, Section } from "@/components/ui";
 import { HumanStatusPill } from "@/components/human-status";
 import { JourneyStrip } from "@/components/journey-strip";
 import { NextActionButton } from "@/components/next-action-button";
@@ -23,46 +23,59 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
   const action = nextAction(state);
   const stages = buildJourney(state);
   const posts = currentPosts(state).slice(0, 4);
-  const frame =
-    action.status === "blocked" ? "border-rose-200" : action.status === "waiting" ? "border-amber-200" : "border-line";
+  const done = stages.filter((stage) => stage.status === "done").length;
 
   return (
-    <div className="grid min-w-0 gap-8">
-      <section className={`min-w-0 rounded-2xl border bg-panel px-5 py-6 shadow-card sm:px-7 sm:py-7 ${frame}`}>
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
-          <HumanStatusPill status={action.status} />
-          <p className="min-w-0 break-words text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
-            Pipeline · {state.pipeline.label}
-            {state.pipeline.agentName ? ` · ${state.pipeline.agentName}` : ""}
-          </p>
-        </div>
-        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{state.client.businessName}</p>
-        <h1 className="mt-1 max-w-3xl break-words font-serif text-3xl leading-tight tracking-tight text-balance sm:text-4xl">{action.title}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">{action.detail}</p>
-        {state.workflow?.requestText ? <p className="mt-4 max-w-2xl break-words text-sm leading-6">“{state.workflow.requestText}”</p> : null}
+    <div className="grid min-w-0 gap-6">
+      <header className="border-b border-line pb-5">
+        <p className="text-xs font-medium text-ink-soft">{state.client.businessName}</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Overview</h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-ink-soft">Where this brand stands. Nothing on this page is posted.</p>
+      </header>
+      <Section
+        title={action.title}
+        lede={action.detail}
+        action={
+          <>
+            <HumanStatusPill status={action.status} />
+            <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
+          </>
+        }
+      >
+        <p className="text-xs font-medium text-ink-soft">
+          Pipeline · {state.pipeline.label}
+          {state.pipeline.agentName ? ` · ${state.pipeline.agentName}` : ""}
+        </p>
+        {state.workflow?.requestText ? <p className="mt-3 max-w-2xl break-words text-sm leading-6">“{state.workflow.requestText}”</p> : null}
         <FailedJobs jobs={state.jobs} />
-        <div className="mt-5 flex flex-wrap items-center gap-4">
-          <NextActionButton action={action} projectId={id} onDone={() => void reload()} />
-          {posts.length > 0 && !action.href.endsWith("/content") ? (
-            <Link href={`/projects/${id}/content`} className="text-sm font-semibold text-accent">
+        <div className="mt-3 flex flex-wrap gap-4 text-sm">
+          {posts.length > 0 ? (
+            <Link href={`/projects/${id}/content`} className="font-medium text-accent">
               Preview posts
             </Link>
           ) : null}
           {action.href.endsWith("/review") ? null : state.approval.status === "AWAITING_APPROVAL" ? (
-            <Link href={`/projects/${id}/review`} className="text-sm font-semibold text-accent">
+            <Link href={`/projects/${id}/review`} className="font-medium text-accent">
               Review drafts
             </Link>
           ) : null}
         </div>
-      </section>
+      </Section>
       <JobProgress jobs={state.jobs} pipeline={state.pipeline} />
       <BriefChecklist projectId={id} client={state.client} />
-      <JourneyStrip stages={stages} currentId={focusStage(stages)} />
+      <section className="min-w-0">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-tight">Journey</h2>
+          <p className="text-xs font-medium text-ink-soft">
+            {done} of {stages.length}
+          </p>
+        </div>
+        <JourneyStrip stages={stages} currentId={focusStage(stages)} />
+      </section>
       <section>
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-serif text-2xl">Latest posts</h2>
-          <Link href={`/projects/${id}/content`} className="text-sm font-semibold text-accent">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-tight">Latest posts</h2>
+          <Link href={`/projects/${id}/content`} className="text-sm font-medium text-accent">
             All posts
           </Link>
         </div>
@@ -77,7 +90,7 @@ export default function OverviewPage({ params }: { params: Promise<{ id: string 
           </EmptyState>
           </div>
         ) : (
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {posts.map((asset) => (
               <PostPreview key={asset.id} asset={asset} businessName={state.client?.businessName || state.project.name} website={state.client?.website} />
             ))}

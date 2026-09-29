@@ -41,13 +41,16 @@ export function PostDecision({
   }
 
   return (
-    <div className="rounded-2xl border border-ink bg-panel p-5 shadow-card">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">This draft only</p>
-      <h3 className="mt-2 break-words font-serif text-2xl leading-tight">{asset.hook || "Untitled draft"}</h3>
-      <p className="mt-1 text-sm text-ink-soft">
-        {asset.platform}. Approve, revise, or hold applies to this draft. Other drafts stay undecided until you choose them.
-      </p>
-      <label className="mt-4 block text-sm">
+    <div className="overflow-hidden rounded-xl border border-line bg-panel shadow-card">
+      <div className="border-b border-line px-5 py-4">
+        <p className="text-xs font-medium text-ink-soft">This draft only</p>
+        <h3 className="mt-1 break-words text-base font-semibold leading-snug tracking-tight">{asset.hook || "Untitled draft"}</h3>
+        <p className="mt-1 text-sm leading-6 text-ink-soft">
+          {asset.platform}. These actions apply to this draft. The others stay as they are.
+        </p>
+      </div>
+      <div className="px-5 py-4">
+      <label className="block text-sm">
         <span className="mb-1.5 block font-medium">Note</span>
         <textarea
           value={note}
@@ -58,13 +61,13 @@ export function PostDecision({
         />
       </label>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" disabled={pending} onClick={() => void send("APPROVE")} className="inline-flex items-center justify-center rounded-lg bg-pine px-4 py-2.5 text-sm font-semibold text-white hover:bg-pine/90 disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => void send("APPROVE")} className="inline-flex h-9 items-center justify-center rounded-lg bg-ink px-3.5 text-sm font-medium text-white hover:bg-ink/90 disabled:opacity-50">
           Approve this draft
         </button>
-        <button type="button" disabled={pending} onClick={() => void send("REVISION")} className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => void send("REVISION")} className="inline-flex h-9 items-center justify-center rounded-lg border border-line bg-white px-3.5 text-sm font-medium hover:bg-paper disabled:opacity-50">
           Revise this draft
         </button>
-        <button type="button" disabled={pending} onClick={() => void send("HOLD")} className="inline-flex items-center justify-center rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
+        <button type="button" disabled={pending} onClick={() => void send("HOLD")} className="inline-flex h-9 items-center justify-center rounded-lg px-3.5 text-sm font-medium text-ink-soft hover:bg-paper disabled:opacity-50">
           Hold this draft
         </button>
       </div>
@@ -82,6 +85,7 @@ export function PostDecision({
           </Banner>
         </div>
       ) : null}
+      </div>
     </div>
   );
 }

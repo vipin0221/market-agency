@@ -6,7 +6,7 @@ import { FailedJobs } from "@/components/failed-jobs";
 import { NextActionButton } from "@/components/next-action-button";
 import { PageHeader } from "@/components/page-header";
 import { PostPreview } from "@/components/post-preview";
-import { Banner, EmptyState, LoadingLine } from "@/components/ui";
+import { Banner, EmptyState, LoadingLine, primaryButtonClass } from "@/components/ui";
 import { useProjectState } from "@/components/use-project-state";
 import { nextAction } from "@/lib/journey";
 
@@ -26,21 +26,19 @@ export default function ContentPage({ params }: { params: Promise<{ id: string }
   const action = nextAction(state);
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-5">
       <PageHeader
         kicker="Content"
         title="Posts"
-        lede="Read the hook, caption, and call to action. A decision is made per draft on Review, and nothing here is posted."
+        lede="Read the hook, caption, and call to action. Decisions happen on Review, and nothing here is posted."
+        actions={
+          action.href.endsWith("/review") ? (
+            <Link href={action.href} className={primaryButtonClass}>
+              Review drafts
+            </Link>
+          ) : null
+        }
       />
-      {action.href.endsWith("/review") ? (
-        <p className="text-sm leading-6 text-ink-soft">
-          Next:{" "}
-          <Link href={action.href} className="font-semibold text-accent">
-            decide each draft on Review
-          </Link>
-          . This page is the reading view.
-        </p>
-      ) : null}
       {state.pipeline.state === "failed" ? (
         <section className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
           <p className="text-sm font-semibold text-rose-950">A step failed before these drafts were finished. Retry it, then come back to these posts.</p>
@@ -103,7 +101,7 @@ function PostGrid({
     return empty ? <EmptyState>{empty}</EmptyState> : null;
   }
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
       {assets.map((asset) => (
         <PostPreview key={asset.id} asset={asset} businessName={businessName} website={website} />
       ))}

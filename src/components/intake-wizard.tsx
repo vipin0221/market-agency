@@ -138,13 +138,15 @@ export function IntakeWizard() {
           Brands
         </Link>
       </AppTopBar>
-      <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+      <header className="mt-6 border-b border-line pb-5">
+      <p className="text-xs font-medium text-ink-soft">
         Step {step + 1} of {steps.length}
       </p>
-      <h1 className="mt-2 break-words font-serif text-3xl leading-tight sm:text-4xl">Add a brand</h1>
+      <h1 className="mt-1 break-words text-2xl font-semibold tracking-tight">Add a brand</h1>
       <p className="mt-2 text-sm leading-6 text-ink-soft">
         Business name, the ask, and one channel are required. Everything else can wait. Next, after you start, is the brand overview. Drafts are not posted.
       </p>
+      </header>
       <ol className="mt-6 flex flex-wrap gap-2">
         {steps.map((item, index) => {
           const active = index === step;

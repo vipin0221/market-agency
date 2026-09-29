@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Section, secondaryButtonClass } from "@/components/ui";
 import type { ProjectState } from "@/lib/state";
 
 const fields: { key: keyof NonNullable<ProjectState["client"]>; label: string; example: string }[] = [
@@ -15,24 +16,26 @@ export function BriefChecklist({ projectId, client }: { projectId: string; clien
   const missing = fields.filter((field) => !String(client[field.key] ?? "").trim());
   if (missing.length === 0) return null;
   return (
-    <section className="min-w-0 rounded-2xl border border-line bg-panel p-5">
-      <h2 className="font-serif text-2xl">Complete the brief</h2>
-      <p className="mt-2 text-sm leading-6 text-ink-soft">
-        Blank fields stay unknown. Drafts will not invent them. Fill the highest items first.
-      </p>
-      <ol className="mt-4 grid gap-3">
+    <Section
+      title="Complete the brief"
+      lede="Blank fields stay unknown. Drafts will not invent them."
+      action={
+        <Link href={`/projects/${projectId}/journey#brand`} className={secondaryButtonClass}>
+          Edit the brief
+        </Link>
+      }
+      padded={false}
+    >
+      <ol>
         {missing.map((field, index) => (
-          <li key={field.key} className="min-w-0 rounded-xl bg-paper px-3 py-3">
-            <p className="text-sm font-semibold">
+          <li key={field.key} className="grid gap-1 border-t border-line px-5 py-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-baseline first:border-t-0">
+            <p className="text-sm font-medium">
               {index + 1}. {field.label}
             </p>
-            <p className="mt-1 text-sm text-ink-soft">Example: {field.example}</p>
+            <p className="text-sm text-ink-soft">Example: {field.example}</p>
           </li>
         ))}
       </ol>
-      <Link href={`/projects/${projectId}/journey#brand`} className="mt-4 inline-flex text-sm font-semibold text-accent">
-        Edit the brief
-      </Link>
-    </section>
+    </Section>
   );
 }

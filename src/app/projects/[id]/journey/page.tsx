@@ -33,8 +33,8 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
         lede="Brand through reports. Campaigns and reports come later, and a campaign is not required for organic posts."
       />
       {state.workflow ? (
-        <section className="rounded-2xl border border-line bg-panel px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">You asked</p>
+        <section className="rounded-xl border border-line bg-panel px-5 py-4">
+          <p className="text-xs font-medium text-ink-soft">You asked</p>
           <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{state.workflow.requestText}</p>
         </section>
       ) : (
@@ -43,7 +43,7 @@ export default function JourneyPage({ params }: { params: Promise<{ id: string }
       {state.pipeline.state === "failed" || state.pipeline.stalled ? (
         <section className="rounded-2xl border border-rose-200 bg-panel px-5 py-5">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Next</p>
-          <h2 className="mt-2 font-serif text-3xl">{action.title}</h2>
+          <h2 className="mt-2 text-lg font-semibold tracking-tight">{action.title}</h2>
           <p className="mt-2 text-sm leading-6 text-ink-soft">{action.detail}</p>
           <FailedJobs jobs={state.jobs} />
           <div className="mt-4">

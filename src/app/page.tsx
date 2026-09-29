@@ -23,11 +23,11 @@ export default async function HomePage() {
         </Link>
         <SignOutButton className="font-semibold" />
       </AppTopBar>
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
         <div className="min-w-0">
-          <h1 className="break-words font-serif text-3xl leading-tight sm:text-4xl">Your brands</h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-ink-soft">
-            Open a brand to see the next step. Drafts wait for review. Connect stays not connected. Campaigns and reports are optional. Nothing here posts live.
+          <h1 className="break-words text-2xl font-semibold tracking-tight">Your brands</h1>
+          <p className="mt-1.5 max-w-xl text-sm leading-6 text-ink-soft">
+            Open a brand to see the next step. Drafts wait for review. Connect stays not connected. Nothing here posts live.
           </p>
         </div>
         <Link href="/new" className={primaryButtonClass}>
@@ -55,16 +55,16 @@ export default async function HomePage() {
             const channels = project.client?.channels.trim() || "No channel on file";
             return (
               <li key={project.id} className="min-w-0">
-                <Link href={`/projects/${project.id}`} className="block h-full min-w-0 rounded-2xl border border-line bg-panel p-5 shadow-card hover:border-ink/30">
+                <Link href={`/projects/${project.id}`} className="block h-full min-w-0 rounded-xl border border-line bg-panel p-4 shadow-card hover:border-ink/20">
                   <div className="flex items-start justify-between gap-3">
-                    <h2 className="min-w-0 break-words font-serif text-3xl leading-tight">{project.name}</h2>
+                    <h2 className="min-w-0 break-words text-base font-semibold tracking-tight">{project.name}</h2>
                     <HumanStatusPill status={tone.status} label={tone.label} />
                   </div>
                   {project.client?.businessName && project.client.businessName !== project.name ? (
                     <p className="mt-1 break-words text-sm text-ink-soft">{project.client.businessName}</p>
                   ) : null}
                   <p className="mt-4 break-words text-sm">{channels}</p>
-                  <p className="mt-3 text-sm font-semibold text-accent">Continue</p>
+                  <p className="mt-3 text-sm font-medium text-accent">Continue</p>
                 </Link>
               </li>
             );

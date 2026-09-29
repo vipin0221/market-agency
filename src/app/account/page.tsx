@@ -28,7 +28,7 @@ export default async function AccountPage() {
         </Link>
         <SignOutButton className="font-semibold" />
       </AppTopBar>
-      <h1 className="mt-6 break-words font-serif text-3xl leading-tight sm:text-4xl">Account</h1>
+      <h1 className="mt-6 break-words text-2xl font-semibold tracking-tight">Account</h1>
       <p className="mt-3 text-sm leading-6 text-ink-soft">Local operators only. Passwords are stored as a hash. Signing out ends this browser session and returns you to sign-in.</p>
       <div className="mt-4">
         <PasswordNotice mustChange={session.operator.mustChangePassword} />

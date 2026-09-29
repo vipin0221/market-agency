@@ -1,3 +1,4 @@
+import { Section } from "@/components/ui";
 import type { ProjectState } from "@/lib/state";
 
 const labels: Record<string, string> = {
@@ -13,25 +14,27 @@ export function JobProgress({ jobs, pipeline }: { jobs: ProjectState["jobs"]; pi
   if (jobs.length === 0) return null;
   const done = jobs.filter((job) => job.status === "COMPLETED").length;
   return (
-    <section className="min-w-0 rounded-2xl border border-line bg-panel p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-serif text-2xl">Pipeline</h2>
+    <Section
+      title="Pipeline"
+      lede={pipeline.detail}
+      action={
         <p className="text-xs font-medium text-ink-soft">
           {pipeline.label}
-          {pipeline.agentName ? ` · ${pipeline.agentName}` : ""} · {done} of {jobs.length} complete
+          {pipeline.agentName ? ` · ${pipeline.agentName}` : ""} · {done} of {jobs.length}
         </p>
-      </div>
-      <p className="mt-2 text-sm leading-6 text-ink-soft">{pipeline.detail}</p>
-      <ol className="mt-4 grid gap-2">
+      }
+      padded={false}
+    >
+      <ol>
         {jobs.map((job) => (
-          <li key={job.id} className="flex min-w-0 flex-wrap items-baseline justify-between gap-2 rounded-xl bg-paper px-3 py-2 text-sm">
-            <span className="min-w-0 break-words font-medium">{job.agentName}</span>
-            <span className={job.status === "FAILED" || job.status === "CONFLICT" ? "font-semibold text-rose-900" : "text-ink-soft"}>
+          <li key={job.id} className="flex min-w-0 items-center justify-between gap-3 border-t border-line px-5 py-2.5 text-sm first:border-t-0">
+            <span className="min-w-0 break-words">{job.agentName}</span>
+            <span className={job.status === "FAILED" || job.status === "CONFLICT" ? "shrink-0 font-medium text-rose-800" : "shrink-0 text-ink-soft"}>
               {labels[job.status] ?? job.status}
             </span>
           </li>
         ))}
       </ol>
-    </section>
+    </Section>
   );
 }

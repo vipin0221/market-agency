@@ -5,20 +5,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#1c1915",
-        "ink-soft": "#4a433a",
-        paper: "#f3efe6",
-        panel: "#fffdf8",
-        line: "#e0d6c8",
-        accent: "#9a3412",
-        pine: "#1f4d3a",
+        ink: "#111318",
+        "ink-soft": "#5c6570",
+        paper: "#f4f5f7",
+        panel: "#ffffff",
+        line: "#e6e8ec",
+        accent: "#1d4ed8",
+        pine: "#0f766e",
       },
       fontFamily: {
-        serif: ['"Iowan Old Style"', "Palatino", "Georgia", "serif"],
-        sans: ['"Avenir Next"', "Segoe UI", "Helvetica", "Arial", "sans-serif"],
+        sans: ['ui-sans-serif', "system-ui", "-apple-system", '"Segoe UI"', "Helvetica", "Arial", "sans-serif"],
+        serif: ['ui-sans-serif', "system-ui", "-apple-system", '"Segoe UI"', "Helvetica", "Arial", "sans-serif"],
       },
       boxShadow: {
-        card: "0 1px 0 rgba(28, 25, 21, 0.04), 0 12px 32px rgba(28, 25, 21, 0.04)",
+        card: "0 1px 2px rgba(17, 19, 24, 0.04)",
       },
     },
   },
